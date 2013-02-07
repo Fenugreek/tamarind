@@ -112,13 +112,13 @@ def rank(data, axis=None, reverse=False, mask=None):
     if axis is None:
         # initialize ranks to -1, value to return for NaNs
         indices_rank = numpy.zeros(numpy.shape(data), dtype=int) - 1
-        sort_indices = S.arrays.argsort(data, reverse=reverse, mask=mask)
+        sort_indices = argsort(data, reverse=reverse, mask=mask)
         indices_rank[sort_indices] = numpy.array(range(numpy.shape(sort_indices)[-1]))
         return indices_rank
 
     if not isinstance(data, numpy.ndarray): data = numpy.array(data)    
-    sort_indices = S.arrays.argsort(data.swapaxes(axis, -1),
-                                    reverse=reverse, last_dim=True, mask=mask)
+    sort_indices = argsort(data.swapaxes(axis, -1),
+                           reverse=reverse, last_dim=True, mask=mask)
 
     indices_rank = numpy.zeros(data.swapaxes(axis, -1).shape, dtype=int) - 1
     for ndindex, sort_list in numpy.ndenumerate(sort_indices):
