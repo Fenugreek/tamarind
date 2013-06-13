@@ -12,7 +12,7 @@ the Free Software Foundation, either version 3 of the License, or
 
 import os, sys, re, gzip, cStringIO
 import numpy
-import S.strings, S.arrays, S.logging
+import strings, arrays, logging
 
 class Datab(numpy.ndarray):
     """
@@ -42,7 +42,7 @@ class Datab(numpy.ndarray):
     missing data can be easily instantiated.
 
     obj.logger:
-    S.logging object for printing error messages.
+    logging object for printing error messages.
     """
 
     # formatting and missing value defaults, if not specified in spec.
@@ -84,7 +84,7 @@ class Datab(numpy.ndarray):
         list of fields to skip loading.
 
         logger:
-        Log error messages using this S.logging object; if a string, construct one
+        Log error messages using this logging object; if a string, construct one
         with this loglevel.
         """
         
@@ -250,11 +250,11 @@ class Datab(numpy.ndarray):
         Return None if file not found; otherwise raise ValueError.
 
         logger:
-        Log error messages using this S.logging object; if a string, construct one
+        Log error messages using this logging object; if a string, construct one
         with this loglevel.
         """
 
-        if type(logger) == str: logger = S.logging.Logger('Datab', logger)
+        if type(logger) == str: logger = logging.Logger('Datab', logger)
 
         if filename_or_data is None:
             if (shape is None) or (spec is None): raise ValueError('Must specify shape and spec if no filename/data')
@@ -362,7 +362,7 @@ class Datab(numpy.ndarray):
         if numpy.isscalar(key):
             self.index = dict([(ID, count)
                               for count, ID in enumerate(self[key])])
-        else: self.index = S.arrays.index_array(self, key, arg=True)
+        else: self.index = arrays.index_array(self, key, arg=True)
         if self.identifier is None: self.identifier = key
         
     # Boiler-plate factory method for correct subclassing/CPickling.
@@ -520,7 +520,7 @@ class Datab(numpy.ndarray):
         if indices is None: records = self
         else: records = self[indices]        
         if sort is not None:
-            srt_idx = S.arrays.argsort(records, order=sort, reverse=reverse)
+            srt_idx = arrays.argsort(records, order=sort, reverse=reverse)
             records = records[srt_idx]
         elif reverse: records = records[::-1]
 
@@ -571,7 +571,7 @@ class Datab(numpy.ndarray):
                      '#formats ' + ' '.join([self.field_spec[i][2] for i in fields])]
             return '\n'.join(lines)
         else:
-            return ' '.join([S.strings.fmt(field_name[f], self.field_spec[f][2])
+            return ' '.join([strings.fmt(field_name[f], self.field_spec[f][2])
                              for f in fields])
 
         
