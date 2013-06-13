@@ -29,13 +29,13 @@ def overlay(x_values, y_values, *args, **kwargs):
     if slices is None: return
     
     s0 = slices[0]
-    pyplot.plot(x_values[max(s0.start - 1, 0) : s0.stop + 1],
-                y_values[max(s0.start - 1, 0) : s0.stop + 1],
+    pyplot.plot(x_values[max(s0.start - 1, 0) : s0.stop],
+                y_values[max(s0.start - 1, 0) : s0.stop],
                 *args, **kwargs)
     if 'label' in kwargs: kwargs['label'] = '_nolegend_'
     for s in slices[1:]:
-        pyplot.plot(x_values[s.start - 1 : s.stop + 1],
-                    y_values[s.start - 1 : s.stop + 1],
+        pyplot.plot(x_values[s.start - 1 : s.stop],
+                    y_values[s.start - 1 : s.stop],
                     *args, **kwargs)
     
     

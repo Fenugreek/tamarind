@@ -70,14 +70,12 @@ class Datab(numpy.ndarray):
         NOTE: lines beginning with '#' always ignored.
 
         select_field_values:
-        list of (<field>, [str1, str2, ...]) where rows are to be loaded only if
-        the value for each <field> is one of str1, str2, ...
-        You may specify {str1: True, str2: True, ...} instead of [str1, str2, ...].
+        list of (<field>, set([str1, str2, ...])) where rows are to be loaded only if
+        the value for each <field> is in [str1, str2, ...]
         
         skip_field_values:
-        list of (<field>, [str1, str2, ...]) where rows are to be loaded only if
-        the value for each <field> is not one of str1, str2, ...
-        You may specify {str1: True, str2: True, ...} instead of [str1, str2, ...].
+        list of (<field>, set([str1, str2, ...])) where rows are to be loaded only if
+        the value for each <field> is not in [str1, str2, ...]
         
         select_fields:
         list of fields to restrict loading.
@@ -111,24 +109,10 @@ class Datab(numpy.ndarray):
             separator = file_separator
 
         # parse specified inclusion and exclusion criteria
-        inclusion = []
-        exclusion = []    
-        field_index = dict([(field_spec[0], count)
-                            for count, field_spec in enumerate(spec)])
-        if select_field_values:
-            for field_values in select_field_values:
-                if type(field_values[1]) == dict:
-                    inclusion.append((field_index[field_values[0]], field_values[1]))
-                else:
-                    inclusion.append((field_index[field_values[0]],
-                                      dict([(value, True) for value in field_values[1]])))
-        if skip_field_values:
-            for field_values in skip_field_values:
-                if type(field_values[1]) == dict:
-                    exclusion.append((field_index[field_values[0]], field_values[1]))
-                else:
-                    exclusion.append((field_index[field_values[0]],
-                                      dict([(value, True) for value in field_values[1]])))
+        field_index = dict((field_spec[0], count)
+                           for count, field_spec in enumerate(spec))
+        inclusion = [(field_index[fv[0]], fv[1]) for fv in select_field_values or []]
+        exclusion = [(field_index[fv[0]], fv[1]) for fv in skip_field_values or []]
 
         # if user specifies fields to keep/skip, note their positions
         include_fields = []
@@ -193,10 +177,10 @@ class Datab(numpy.ndarray):
         spec = None
         if len(spec_t[0]):
             if len(spec_t[1]) and len(spec_t[1]) != len(spec_t[0]):
-                raise AssertionError('File has bad header spec: ' + filename + str(spec_t[1]))
+                raise AssertionError('File has bad header spec: ' + str(spec_t[1]))
             if len(spec_t[2]) and len(spec_t[2]) != len(spec_t[0]):
                 print spec_t[2]
-                raise AssertionError('File has bad header spec: ' + filename + str(spec_t[2]))
+                raise AssertionError('File has bad header spec: ' + str(spec_t[2]))
             spec_a = numpy.array(spec_t).transpose()
             spec = [tuple(row) for row in spec_a]
 
@@ -457,6 +441,9 @@ class Datab(numpy.ndarray):
         exclude:
         list of fields to exclude from printing.
 
+        rename:
+        list of (field, new_name) pairs to rename fields in header of output
+
         sort:
         sort records by this field before printing.
 
@@ -489,18 +476,13 @@ class Datab(numpy.ndarray):
         Whether to print a one-line header or not. Defaults to true if printing
         to standard output, false otherwise.
 
-        rename:
-        list of (field, new_name) pairs to rename fields in header of output
-
         select_values:
-        (<field>, [str1, str2, ...]) where rows are to be printed only if
-        the value for <field> is one of str1, str2, ...
-        You may specify {str1: True, str2: True, ...} instead of [str1, str2, ...].
+        (<field>, set([str1, str2, ...])) where rows are to be printed only if
+        the value for <field> is in [str1, str2, ...]
         
         skip_values:
-        (<field>, [str1, str2, ...]) where rows are to be printed only if
-        the value for <field> is not one of str1, str2, ...
-        You may specify {str1: True, str2: True, ...} instead of [str1, str2, ...].
+        (<field>, set([str1, str2, ...])) where rows are to be printed only if
+        the value for <field> is not in [str1, str2, ...]
 
         line_space:
         Print an empty line every these many lines.
@@ -546,11 +528,6 @@ class Datab(numpy.ndarray):
             if numpy.isscalar(sliced): sliced = [sliced]
             records = records[slice(*sliced)]
             
-        if select_values and type(select_values[1]) != dict:
-            select_values[1] = dict([(v, True) for v in select_values[1]])
-        if skip_values and type(skip_values[1]) != dict:
-            skip_values[1] = dict([(v, True) for v in skip_values[1]])
-
         uniques = {}
         line_count = 0
         for record in records:
