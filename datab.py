@@ -308,10 +308,12 @@ class Datab(numpy.ndarray):
             if len(field_spec) == 2: field_spec.append(defaults[0])
 
         our_dtype = numpy.dtype([tuple(i[:2]) for i in full_spec])
+        empty_record = numpy.array([tuple(empty_record)], dtype=our_dtype)
+
         if type(data) == list: data = numpy.array(data, dtype=our_dtype)
         elif data is None:
             data = numpy.empty(shape, dtype=our_dtype)
-            data.fill(tuple(empty_record))
+            data.fill(empty_record[0])
         if shape == None: shape = numpy.shape(data)
 
         if sort: data = numpy.sort(data, order=sort)
@@ -328,12 +330,12 @@ class Datab(numpy.ndarray):
         obj.spec = [(s[0], d[1], s[2])
                     for s, d in zip(full_spec, obj.dtype.descr)]
         obj.field_spec = dict([(i[0], i) for i in obj.spec])
+        obj.empty_record = empty_record
 
         obj.identifier = identifier
         if index: obj.build_index(index)
         else: obj.index = None
                             
-        obj.empty_record = numpy.array([tuple(empty_record)], dtype=our_dtype)
         obj.logger = logger
 
         return obj
