@@ -126,3 +126,95 @@ def rank(data, axis=None, reverse=False, mask=None):
             indices_rank[ndindex][index] = rank
 
     return indices_rank.swapaxes(-1, axis)
+
+
+def nice_array(values, shape=None, logger=None, copy=False):
+    """
+    Utility function to convert input data to a nice ma.array with appropriate shape
+    if necessary. Converts integer arrays to float arrays.
+    """
+    
+    if isinstance(values, numpy.ma.masked_array):
+        if values.dtype.kind == 'i': result = numpy.ma.asarray(values, dtype=float)
+        elif copy: result = values.copy() 
+        else: result = values
+    elif values is None: return None
+    else: result = numpy.ma.array(values, mask=numpy.isnan(values),
+                                  fill_value=numpy.nan, copy=copy, dtype=float)
+
+    if shape is not None and result.shape != shape:
+        if result.size == numpy.prod(shape):
+            result = result.reshape(shape)
+        elif len(result) == shape[0]:
+            if logger is not None: logger.debug('nice_array: Broadcasting 1D values for 2D values across columns.')
+            result = result[:, numpy.newaxis] + numpy.ma.zeros(shape[1])
+        elif len(result) == shape[1]:
+            if logger is not None: logger.debug('nice_array: Broadcasting 1D values for 2D values across rows.')
+            result = (result[:, numpy.newaxis] + numpy.ma.zeros(shape[1])).T
+        else: raise ValueError('shape mismatch: 1D values cannot be broadcast to shape of values')
+
+    if numpy.shape(result) != numpy.shape(result.mask):
+        if logger is not None: logger.debug('Badly shaped mask in input values array. Setting mask to isnan(values).')
+        result.mask = numpy.isnan(result)
+
+    return result
+
+
+def select(data, sliced=None, overlay=None, select=None):
+    """
+    Given a list of arrays as inputs, return selected elements from each as follows.
+
+    slice:
+    apply slice to each array.
+
+    overlay:
+    set mask for each to ~overlay. This mask can have one less dimension than the data.
+
+    select:
+    return elements corresponding to this mask (i.e. a[select]).
+    """
+
+    data = list(data)
+    results = data
+
+    if overlay is not None:
+        for count, records in enumerate(data):
+            if records is None: continue
+            if overlay.ndim < results[count].ndim:
+                new_mask = extend(~overlay, numpy.shape(records)[-1])
+            else: new_mask = ~overlay
+            results[count] = numpy.ma.array(records, mask=new_mask, keep_mask=True)
+    
+    if sliced is None and select is None:
+        return results
+
+    if sliced is not None:
+        if numpy.isscalar(sliced): sliced = [sliced]
+        for count, records in enumerate(data):
+            if records is None: continue
+            results[count] = records[slice(*sliced)]
+        if select is not None: select = select[slice(*sliced)]
+
+    if select is not None:
+        for count, records in enumerate(data):
+            if records is None: continue
+            results[count] = records[select]
+
+    return results
+
+
+def extend(data, count, copy=False):
+    """
+    Given array, return array with new dimension containing duplicated values.
+
+    If copy is False, a view of the original array is returned.
+    """
+
+    if copy: return numpy.tile(data[..., numpy.newaxis], count)
+    else:
+        length = data.shape[-1]
+        shape = data.shape + (count,)
+        strides = data.strides + (0,)
+        return numpy.lib.stride_tricks.as_strided(data, shape=shape, strides=strides)
+    
+
