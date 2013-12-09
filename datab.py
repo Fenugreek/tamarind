@@ -285,11 +285,6 @@ class Datab(numpy.ndarray):
                 elif 'i' in type_str: empty_values.append(Datab.field_defaults['int'][1])
                 elif 'b' in type_str: empty_values.append(Datab.field_defaults['bool'][1])
                 else: empty_values.append(Datab.field_defaults['float'][1])
-            if data is not None:
-                for count in range(len(data)):
-                    row = list(data[count])
-                    row.extend(empty_values)
-                    data[count] = tuple(row)
 
         empty_record = []
         for field_spec in full_spec:
@@ -306,6 +301,14 @@ class Datab(numpy.ndarray):
             else: defaults = Datab.field_defaults['float']
             empty_record.append(defaults[1])
             if len(field_spec) == 2: field_spec.append(defaults[0])
+        empty_record = tuple(empty_record)
+
+        if type(data) == list:
+            # can try to speed up the following
+            for count, row in enumerate(data):
+                if row is None: data[count] = empty_record
+                elif add_spec is not None:
+                    data[count] = tuple(list(row) + empty_values)
 
         our_dtype = numpy.dtype([tuple(i[:2]) for i in full_spec])
         empty_record = numpy.array([tuple(empty_record)], dtype=our_dtype)
