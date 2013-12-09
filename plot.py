@@ -9,9 +9,26 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
+import datetime
 import numpy
 from matplotlib import pyplot
 
+def dt(dates):
+    """
+    Convert '20020930' to datetime.date(2002, 9, 30)
+    """
+
+    if numpy.isscalar(dates):
+        date = str(dates)
+        return datetime.date(int(date[:4]), int(date[4:6]), int(date[6:8]))
+
+    results = []
+    for date in numpy.array(dates).flatten():
+        date = str(date)
+        results.append(datetime.date(int(date[:4]), int(date[4:6]), int(date[6:8])))
+    return numpy.array(results).reshape(numpy.shape(dates))
+
+        
 def overlay(x_values, y_values, *args, **kwargs):
     """
     Plot unmasked values as a solid line, and masked values as a dashed line.
