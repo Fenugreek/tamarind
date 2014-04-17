@@ -189,7 +189,7 @@ class Datab(numpy.ndarray):
 
     def __new__(subtype, filename_or_data=None, spec=None, add_spec=None,
                 separator=None, match_pattern=None, index=None, identifier=None,
-                select_field_values=None, skip_field_values=None,
+                select_field_values=None, skip_field_values=None, process_Nones=False,
                 select_fields=[], skip_fields=[], logger='warning',
                 sort=None, reverse=False, None_OK=True, shape=None):
         """
@@ -246,9 +246,15 @@ class Datab(numpy.ndarray):
         rows are to be loaded only if the value for <field> is not one of
         str1, str2, ...
 
+        sort, reverse:
+        return recarray sorted by this field, optionally in reverse order.
+        
         None_OK:
         Return None if file not found; otherwise raise ValueError.
 
+        process_Nones:
+        if input rows contain Nones, stuff with empty_record.
+        
         logger:
         Log error messages using this logging object; if a string, construct one
         with this loglevel.
@@ -303,7 +309,7 @@ class Datab(numpy.ndarray):
             if len(field_spec) == 2: field_spec.append(defaults[0])
         empty_record = tuple(empty_record)
 
-        if type(data) == list:
+        if process_Nones and type(data) == list:
             # can try to speed up the following
             for count, row in enumerate(data):
                 if row is None: data[count] = empty_record
@@ -403,21 +409,21 @@ class Datab(numpy.ndarray):
         self.identifier = getattr(obj, 'identifier', None)        
 
 
-    def get(self, key, field=None):
+    def get(self, key, field=None, default=None):
         """
         Locate record identified by key; return value of <field> in that record.
-        If <field> is none, return whole record. If record not found, return None.
+        If <field> is none, return whole record. If record not found, return default.
         """
         
         if self.index is None: raise KeyError('Object has no index.')
         if numpy.isscalar(key):
-            if key not in self.index: return None
+            if key not in self.index: return default
             if field is None: return self[self.index[key]]
             else: return self[self.index[key]][field]
         else:
             sub_index = self.index
             for sub_key in key:
-                if sub_key not in sub_index: return None
+                if sub_key not in sub_index: return default
                 sub_index = sub_index[sub_key]
             if field is None: return self[sub_index]
             else: return self[sub_index][field]
