@@ -356,12 +356,13 @@ class Sparse(object):
 
         if label_all is not None:
             results = [cls(data, weights=weights, IDs=IDs, **opts).compute()]
-            results[-1]['label'] = label_all
-        else: results = []
+            all_labels = [label_all]
+        else:
+            results = []
+            all_labels = []
 
         start_idx = 0
         count = 0
-        all_labels = []
         while start_idx < len(data):
             if numpy.isscalar(step): end_idx = start_idx + step
             else: end_idx = start_idx + step[min(count, len(step)-1)]
@@ -816,7 +817,7 @@ class Datab(db.Datab):
 
     def __new__(subtype, results, labels=[], name='key', formats=None, **datab_args):
         """
-        results argument is a list of statistics-records. If correspinding list 
+        results argument is a list of statistics-records. If corresponding list 
         of strings, labels, is given, a column called <name> is created
         and stored in the Datab object, which will also be constructed
         with index=<name> option.
@@ -829,7 +830,7 @@ class Datab(db.Datab):
                 break
         if not first_result: return None
 
-        if not labels:
+        if not len(labels):
             labels = [str(d) for d in range(len(results))]
         
         indices = []
