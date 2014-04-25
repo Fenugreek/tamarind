@@ -64,7 +64,7 @@ class Logger(object):
                  50: 'CRIT'}
 
 
-    def __init__(self, name, level, store=False, critical_exit=True):
+    def __init__(self, name, level, store=False, critical_exit=True, store_notset=False):
         """
 
         name:
@@ -85,6 +85,7 @@ class Logger(object):
         self.setLevel(level)
         self.history = []
         self.store_history = store
+        self.store_history_notset = store_notset
         self.critical_exit = critical_exit
 
     def setLevel(self, level):
@@ -102,9 +103,9 @@ class Logger(object):
             sys.stderr.write('[%-5s %s %s] %s\n' %
                              (Logger.level_str[level], self.name, stamp, text))
 
-        # do not store if level is 'notset'
-        if not level: return
-        if self.store_history: self.history.append([stamp, level, text])
+        if (level and self.store_history) or \
+           (not level and self.store_history_notset):
+            self.history.append([stamp, level, text])
         else: self.history = [[stamp, level, text]]
         return self.history[-1]
     
