@@ -832,6 +832,7 @@ class Datab(db.Datab):
 
         if not len(labels):
             labels = [str(d) for d in range(len(results))]
+        else: labels = [str(l) for l in labels]
         
         indices = []
         for stat in first_result.keys():
