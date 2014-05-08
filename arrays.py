@@ -1,7 +1,7 @@
 """
 Some utilities for numpy array manipulation.
 
-Copyright 2013 Deepak Subburam
+Copyright 2013-2014 Deepak Subburam
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -10,6 +10,55 @@ the Free Software Foundation, either version 3 of the License, or
 """
 
 import numpy
+
+
+def nans(shape):
+    """Return an array of shape shape filled with nans."""
+    result = numpy.empty(shape)
+    result.fill(numpy.nan)
+    return result
+
+
+def isnanzero(data):
+    """Return mask with True values corresponding to nan or 0 in input array"""
+    if data is None: return True
+    if ~numpy.isscalar(data) and ~isinstance(data, numpy.ndarray):
+        data = numpy.array(data)
+    return numpy.isnan(data) | (data==0)
+
+
+def dir_clip(data, clips):
+    """
+    'Directional' clip. Dimension of data and clips must be the same. Values in data
+    are clipped according to corresponding values in clips and returned as a new array.
+    new_value = portion of value between 0 and clip.
+    If clip is nan, new_value = value.
+    """
+    
+    if isinstance(data, numpy.ndarray): results = data.copy()
+    else: results = numpy.array(data)
+
+    mask = (numpy.sign(data) != numpy.sign(clips)) \
+            & ~numpy.isnan(data) & ~numpy.isnan(clips)
+    results[mask] = 0.0
+    mask = ~mask & (abs(data) > abs(clips))
+    results[mask] = clips[mask]
+    return results
+
+
+def toward_zero(data, value):
+    """
+    Subtract value from postive values of data, and add value to negative values
+    of data. Do not cross zero.
+    """
+
+    results = data.copy()
+    results[data > 0] -= value
+    results[data < 0] += value
+    results[(data > 0) & (results < 0)] = 0.0 
+    results[(data < 0) & (results > 0)] = 0.0 
+
+    return results
 
 
 def argsort(data, reverse=False, last_dim=False, mask=None, order=None):
@@ -217,4 +266,214 @@ def extend(data, count, copy=False):
         strides = data.strides + (0,)
         return numpy.lib.stride_tricks.as_strided(data, shape=shape, strides=strides)
     
+
+def nanmask(data, fields=[], overlay=None, copy=True):
+    """
+    Given a 1D/2D recarray, return a MaskedArray with same data, with a mask
+    where nan values are present.
+
+    overlay:
+    mask with same dimensions as data to layer on top of nan mask.
+    """
+
+    bool_dtype = numpy.dtype([(i, bool) for i in data.dtype.names])
+    mask = numpy.zeros(numpy.shape(data), dtype=bool_dtype)
+
+    if not len(fields):
+        for field_descr in data.dtype.descr:
+            if 'f' in field_descr[1]: fields.append(field_descr[0]) 
+    for field in fields:
+        if overlay is not None: mask[field] = numpy.isnan(data[field]) | overlay
+        else: mask[field] = numpy.isnan(data[field])
+        
+    return numpy.ma.array(data, mask=mask, copy=copy)
+
+
+def construct_map(source_IDs, other_ID, overlay=None):
+    """
+    Given a list of symbols, and a dict symbol->index, return a tuple of
+    lists mapping indices from the first list to the second (for elements
+    in intersection of the symbols only).
+
+    overlay:
+    boolean list with elements in source_IDs to selectively include in the results.
+    """
+
+    source, other = [], []
+    for count, identifier in enumerate(source_IDs):
+        if overlay is not None and not overlay[count]: continue
+        if identifier in other_ID:
+            source.append(count)
+            other.append(other_ID[identifier])
+
+    return (source, other)
+
+
+def align_sorted(source_IDs, other_IDs, overlay=None):
+    """
+    Given two lists of elements (second one sorted), return a tuple of lists
+    mapping indices from the first list to the second s.t. the mapped-to element
+    is closest to the mapped-from element in the mapped-to <= mapped-from sense.
+
+    overlay:
+    boolean list with elements in source_IDs to not include in the results.
+    """
+    
+    source, other = [], []
+    indices = numpy.searchsorted(other_IDs, source_IDs, side='right')
+    for count, index in enumerate(indices):
+        if overlay is not None and not overlay[count]: continue
+        if index == 0: continue
+        source.append(count)
+        other.append(index - 1)
+
+    return (source, other)
+
+
+def dict_array(records, key, field=None):
+    """
+    Given a recarray and a key field, return a dict with values of key field
+    as keys and corresponding recarray records as values.
+
+    If field is not None, returned values are recarray[field].
+    """
+
+    output = {}
+    for count, entry in enumerate(records):
+        identifier = entry[key]
+        if identifier not in output: output[identifier] = [count]
+        else: output[identifier].append(count)
+        
+    if field is None:
+        for identifier in output.keys():
+            output[identifier] = records[output[identifier]]
+    else:
+        for identifier in output.keys():
+            output[identifier] = records[output[identifier]][field]
+
+    return output
+
+
+def group_mask(values):
+    """
+    Returns list of (group, mask) where group is every distinct value in values,
+    and mask is True for every element in values that equals this distinct value.
+    """
+    
+    groups = numpy.unique(values)
+    return [(group, values == group) for group in groups]
+
+
+def member_mask(values, other):
+    """
+    Returns mask which is True for every element in values that == some element in other.
+    """
+
+    dict_other = dict((o, True) for o in other)
+    return numpy.array([v in dict_other for v in values])
+
+
+def index_array(records, keys, field=None, arg=False):
+    """
+    Given a recarray and a list of key fields, return a multi-level dict with values
+    of key fields as keys and corresponding recarray records as values.
+
+    If field is not None, end values are record[field].
+    If arg is True, end values are array indices.
+
+    Note: end value of the dict is a scalar.
+    """
+
+    if arg and field is not None: raise SyntaxError('Can not satisfy both arg and field options')
+    
+    output = {}
+    for count, record in enumerate(records):
+        key_values = [record[i] for i in keys]
+        layer = output
+        for key in key_values[:-1]:
+            if key not in layer: layer[key] = {}
+            layer = layer[key]
+        if arg: layer[key_values[-1]] = count
+        elif field is not None: layer[key_values[-1]] = record[field]
+        else: layer[key_values[-1]] = record
+
+    return output
+
+    
+def rolling_window(a, size, offset=1):
+    """
+    [adapted from Erik Rigtorp <erik@rigtorp.com>]
+    
+    Make an ndarray with a rolling window of the last dimension; each window
+    offset by offset elements.
+
+     Parameters
+     ----------
+     a : array_like
+         Array to add rolling window to
+     size : int
+         Size of rolling window
+
+     Returns
+     -------
+     Array that is a view of the original array with a added dimension
+     of size w.
+
+     Examples
+     --------
+     >>> x=np.arange(10).reshape((2,5))
+     >>> rolling_window(x, 3)
+     array([[[0, 1, 2], [1, 2, 3], [2, 3, 4]],
+            [[5, 6, 7], [6, 7, 8], [7, 8, 9]]])
+
+     Calculate rolling mean of last dimension:
+     >>> np.mean(rolling_window(x, 3), -1)
+     array([[ 1.,  2.,  3.],
+            [ 6.,  7.,  8.]])
+    """
+
+    length = a.shape[-1]
+    if size < 1:
+        raise ValueError, "`size` must be at least 1."
+    if size > length:
+        raise ValueError, "`size` is too long."
+
+    # remainder is the last few elements of array a that are left out
+    # because (offset, size) combination doesn't fit length of a.
+    remainder = (length - size) % offset
+    shape = a.shape[:-1] + (int((length - size) / offset) + 1, size)
+    strides = a.strides[:-1] + (a.strides[-1] * offset, a.strides[-1])
+    return numpy.lib.stride_tricks.as_strided(a[..., :length-remainder],
+                                                shape=shape, strides=strides)
+  
+
+def zip_func(func, *args):
+    """
+    For a variable number of arrays and scalars, zip elements and apply func across them.
+
+    a = array([-1.5,  2.4,  5.1,  9.8,  nan])
+    b = a + 0.01
+    zip_func(numpy.min, a, b, 5)
+      => array([-1.5,  2.4,  5.0,  5.0,  nan])
+    """
+    
+    if len(args) < 2: return args[0]
+    
+    length = 0
+    dtype = None
+    for arg in args:
+        if not numpy.isscalar(arg):
+            length = len(arg)
+            dtype = arg.dtype
+            break
+    if not length: return func(args)
+
+    stack = []
+    for arg in args:
+        if numpy.isscalar(arg):
+            arg_array = numpy.empty(length, dtype=dtype)
+            arg_array.fill(arg)
+            stack.append(arg_array)
+        else: stack.append(arg)
+    return func(numpy.vstack(stack), axis=0)
 
