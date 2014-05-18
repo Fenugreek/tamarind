@@ -309,11 +309,18 @@ class Datab(numpy.ndarray):
             if len(field_spec) == 2: field_spec.append(defaults[0])
         empty_record = tuple(empty_record)
 
-        if process_Nones and type(data) == list:
+        if type(data) == list:
             # can try to speed up the following
-            for count, row in enumerate(data):
-                if row is None: data[count] = empty_record
-                elif add_spec is not None:
+            if process_Nones:
+                if add_spec is not None:
+                    for count, row in enumerate(data):
+                        if row is None: data[count] = empty_record
+                        else: data[count] = tuple(list(row) + empty_values)
+                else:
+                    for count, row in enumerate(data):
+                        if row is None: data[count] = empty_record
+            elif add_spec is not None:                    
+                for count, row in enumerate(data):
                     data[count] = tuple(list(row) + empty_values)
 
         our_dtype = numpy.dtype([tuple(i[:2]) for i in full_spec])
