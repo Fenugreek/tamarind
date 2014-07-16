@@ -8,16 +8,24 @@ from scipy.signal import convolve2d, get_window
 from matplotlib import pyplot
 
 
-def _get_window_center(desc, shape, size=None):
+def _get_window(desc, shape, size=None):
 
-    window_shape, window_center = list(shape), [None, None]
+    window_shape = list(shape)
     for i in range(2):
         if shape[i] < 1: window_shape[i] = int(shape[i] * size)
         # round up to nearest odd integer
         if (window_shape[i] + 1) % 2: window_shape[i] = int(window_shape[i]) + 1
-        window_center[i] = (window_shape[i] - 1) / 2
-        
-    return get_window(desc, window_shape), window_center
+
+    if type(desc) == 'str': return get_window(desc, window_shape)
+
+    # desc is like ('gaussian', 0.4).
+    # In these cases, scipy.signal.get_window() doesn't handle 2D shapes.
+    # So compute 1D windows first, and then multiply them together.
+    if desc[1] < 1:
+        desc = [(desc[0], int(desc[1] * s)) for s in window_shape]
+    else: desc = [desc, desc]
+    window = [get_window(d, s) for d, s in zip(desc, window_shape)]
+    return numpy.mat(window[1]).T * numpy.mat(window[0])
 
     
 class KWindows(object):
@@ -28,22 +36,23 @@ class KWindows(object):
     convolution in some cases when unnecessary, and not using FFT.
     """
 
-    def __init__(self, K=100, min_count=0.01, bins=100, window='boxcar', shape=(0.1, 0.1)):
+    def __init__(self, K=100, min_count=0.01, bins=100,
+                 window=('gaussian' 0.4), shape=(0.1, 0.1)):
 
         self.params = {'bins': bins,
                        'window': window,
                        'shape': shape,
                        'K': K,
                        'min_count': min_count}
+        
+        self.window_ = _get_window(window, shape, bins)
 
 
     def fit(self, x1, x2, range=None):
 
         params = self.params
         bins = params['bins']
-        
-        self.window_, window_center = \
-                      _get_window_center(params['window'], params['shape'], bins)
+        window_center = [(s - 1) / 2 for s in self.window_.shape]
         
         self.histogram2d_ = numpy.histogram2d(x1, x2, bins=bins, range=range)
         bin_counts, bin_edges = self.histogram2d_[0], self.histogram2d_[1:]
@@ -89,7 +98,7 @@ class KWindows(object):
     def plot_window(self, bin, *plotargs):
 
         bin_edges = self.histogram2d_[1:]
-        window_center = [(s - 1) / 2 for s in numpy.shape(self.window_)]
+        window_center = [(s - 1) / 2 for s in self.window_.shape]
 
         left = bin_edges[0][max(0, bin[0] - window_center[0])]
         right = bin_edges[0][min(len(bin_edges[0]) - 2, bin[0] + window_center[0]) + 1]
