@@ -5,9 +5,7 @@ API follows that of scikit learn (e.g. sklearn.cluster.Kmeans).
 
 import numpy
 from scipy.signal import convolve2d, get_window
-from matplotlib import pyplot
 import cPickle
-import datab as db
 
 
 def _get_window(desc, shape, size=None):
@@ -111,27 +109,6 @@ class KWindows(object):
                              self.window_mask_
             self.counts_.append(numpy.sum(bin_counts[self.dense_mask_]))
         
-
-    def plot_window(self, bin, *plotargs):
-
-        bin_edges = self.histogram2d_[1:]
-        window_center = [(s - 1) / 2 for s in self.window_.shape]
-
-        left = bin_edges[0][max(0, bin[0] - window_center[0])]
-        right = bin_edges[0][min(len(bin_edges[0]) - 2, bin[0] + window_center[0]) + 1]
-        bottom = bin_edges[1][max(0, bin[1] - window_center[1])]
-        top = bin_edges[1][min(len(bin_edges[1]) - 2, bin[1] + window_center[1]) + 1]
-
-        pyplot.plot([left, left, right, right, left],
-                    [bottom, top, top, bottom, bottom], *plotargs)
-
-
-    def plot_windows(self, windows, *args, **kwargs):
-
-        for w in windows:
-            #self.plot_window(self.bins_[w], *args)
-            pyplot.text(self.centers_[w][0], self.centers_[w][1], str(w),
-                        horizontalalignment='center', verticalalignment='center', **kwargs)
             
 
     def dump(self, filename):
@@ -152,23 +129,3 @@ class KWindows(object):
         cPickle.dump(data, fh, -1)
         fh.close()
         
-
-    def datab(self):
-        """
-        Store computed density centers in nice datab object.
-        """
-
-        spec = [('rank', int, '%-4d'),
-                ('longitude', float, '%10.6f'), ('latitude', float, '%9.6f'),
-                ('binX', int, '%4d'), ('binY', int, '%4d'),
-                ('weight', float, '%7.0f'), ('count', int, '%7d')]
-
-        data = []
-        for count, center_bin in enumerate(zip(self.centers_, self.bins_)):
-            data.append((count,) + 
-                        center_bin[0] + center_bin[1] +
-                        (self.weights_[count], self.counts_[count]))
-
-
-        return db.Datab(data, spec=spec)
-    
