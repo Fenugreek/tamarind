@@ -43,6 +43,7 @@ class KWindows(object):
                        'window': window,
                        'shape': shape,
                        'K': K,
+                       'circular': circular,
                        'min_count': min_count}
         
         self.window_ = _get_window(window, shape, bins)
