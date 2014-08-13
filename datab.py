@@ -100,6 +100,7 @@ class Datab(numpy.ndarray):
         else: stream = open(filename)
         lines = stream.readlines()
 
+        file_separator = None
         if spec is None: spec, file_separator = Datab._get_spec(lines)
         if spec is None: raise AssertionError('No spec from file ' + filename)
         if file_separator is not None:
