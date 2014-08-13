@@ -187,6 +187,7 @@ def nice_array(values, shape=None, logger=None, copy=False):
         if values.dtype.kind == 'i': result = numpy.ma.asarray(values, dtype=float)
         elif copy: result = values.copy() 
         else: result = values
+        result.fill_value = numpy.nan
     elif values is None: return None
     else: result = numpy.ma.array(values, mask=numpy.isnan(values),
                                   fill_value=numpy.nan, copy=copy, dtype=float)
