@@ -347,8 +347,8 @@ class Sparse(object):
             raise ValueError('Axis option value 0 is the only one supported for Multivariate stats.')
 
         if weights is not None and weights.ndim == 1 and data.ndim == 2:
-            print numpy.shape(data)
-            print numpy.shape(weights)
+#            print numpy.shape(data)
+#            print numpy.shape(weights)
             if len(weights) != numpy.shape(data)[1]:
                 raise ValueError('shape mismatch: 1D weights cannot be broadcast to shape of values')
             sys.stderr.write('stats.stats: Broadcasting 1D weights for 2D values.\n')
@@ -944,15 +944,15 @@ class Datab(db.Datab):
 
 
 def summary(*args, **kwargs):
-    Full.summary(*args, **kwargs)
+    Sparse.summary(*args, **kwargs)
 
     
 def loop_summary(*args, **kwargs):
-    Full.loop_summary(*args, **kwargs)
+    Sparse.loop_summary(*args, **kwargs)
 
     
 def stats(*args, **kwargs):
-    return Full.stats(*args, **kwargs)
+    return Sparse.stats(*args, **kwargs)
 
 
 def bucketer(*data_field_splits, **kwargs):
