@@ -188,11 +188,12 @@ class Datab(numpy.ndarray):
         return spec, separator
 
 
-    def __new__(subtype, filename_or_data=None, spec=None, add_spec=None,
-                separator=None, match_pattern=None, index=None, identifier=None,
-                select_field_values=None, skip_field_values=None, process_Nones=False,
-                select_fields=[], skip_fields=[], logger='warning',
-                sort=None, reverse=False, None_OK=True, shape=None):
+    def __new__(subtype, filename_or_data=None, spec=None, add_spec=None, shape=None,
+                index=None, identifier=None, sort=None, reverse=False,
+                select_fields=[], skip_fields=[],
+                select_field_values=None, skip_field_values=None,
+                process_Nones=False, default_missing=False, None_OK=True,
+                separator=None, match_pattern=None, logger='warning'):
         """
         filename_or_data:
         name of file containing the data OR
@@ -255,6 +256,10 @@ class Datab(numpy.ndarray):
 
         process_Nones:
         if input rows contain Nones, stuff with empty_record.
+
+        default_missing:
+        Check input rows for missing values in fields that have defaults in given spec,
+        and replace the missing values with the defaults.
         
         logger:
         Log error messages using this logging object; if a string, construct one
@@ -323,6 +328,18 @@ class Datab(numpy.ndarray):
             elif add_spec is not None:                    
                 for count, row in enumerate(data):
                     data[count] = tuple(list(row) + empty_values)
+            if default_missing:
+                defaults = []
+                for count, field_spec in enumerate(spec):
+                    if len(field_spec) > 3: defaults.append((count, field_spec[3]))
+                if len(defaults):
+                    for count, row in enumerate(data):
+                        for f_count, f_default in defaults:
+                            val = row[f_count]
+                            if val is None or val == '' or val == '\n':
+                                new_row = list(data[count])
+                                new_row[f_count] = f_default
+                                data[count] = tuple(new_row)
 
         our_dtype = numpy.dtype([tuple(i[:2]) for i in full_spec])
         empty_record = numpy.array([tuple(empty_record)], dtype=our_dtype)
@@ -358,6 +375,14 @@ class Datab(numpy.ndarray):
         return obj
 
 
+    def build_index(self, key):
+        if numpy.isscalar(key):
+            self.index = dict([(ID, count)
+                              for count, ID in enumerate(self[key])])
+        else: self.index = arrays.index_array(self, key, arg=True)
+        if self.identifier is None: self.identifier = key
+        
+
     # Boiler-plate factory method for correct subclassing/CPickling.
     def __reduce__(self):
         object_state = list(numpy.ndarray.__reduce__(self))
@@ -375,15 +400,6 @@ class Datab(numpy.ndarray):
     def __array_wrap__(self, out_arr, context=None):
         return numpy.ndarray.__array_wrap__(self, out_arr, context)
 
-
-    # Boiler-plate factory method for correct subclassing/CPickling.
-    def build_index(self, key):
-        if numpy.isscalar(key):
-            self.index = dict([(ID, count)
-                              for count, ID in enumerate(self[key])])
-        else: self.index = arrays.index_array(self, key, arg=True)
-        if self.identifier is None: self.identifier = key
-        
     # Boiler-plate factory method for correct subclassing/CPickling.
     def __array_finalize__(self, obj):
         # [Deepak: Following comment from numpy example doc]
