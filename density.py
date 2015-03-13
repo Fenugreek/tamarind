@@ -18,7 +18,7 @@ def _get_window(desc, shape, size=None):
 
     if type(desc) == 'str': return get_window(desc, window_shape)
 
-    # desc is like ('gaussian', 0.4).
+    # desc is like ('gaussian', 0.3).
     # In these cases, scipy.signal.get_window() doesn't handle 2D shapes.
     # So compute 1D windows first, and then multiply them together.
     if desc[1] < 1:
@@ -37,7 +37,7 @@ class KWindows(object):
     """
 
     def __init__(self, K=100, min_count=0.0005, bins=100,
-                 window=('gaussian', 0.4), shape=(0.1, 0.1), circular=True):
+                 window=('gaussian', 0.3), shape=(0.1, 0.1), circular=True):
 
         self.params = {'bins': bins,
                        'window': window,
@@ -68,7 +68,8 @@ class KWindows(object):
         
         self.histogram2d_ = numpy.histogram2d(x1, x2, bins=bins, range=range)
         bin_counts, bin_edges = self.histogram2d_[0], self.histogram2d_[1:]
-        min_count = numpy.sum(bin_counts) * params['min_count']
+        min_count = params['min_count'] if params['min_count'] >= 1 else \
+                    numpy.sum(bin_counts) * params['min_count'] 
         
         self.first_convolution_ = convolve2d(bin_counts, self.window_, mode='valid')
         max_idx = numpy.unravel_index(self.first_convolution_.argmax(),
