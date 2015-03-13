@@ -27,16 +27,20 @@ def sample_draw(count, size):
         return deck[:count]
 
 
-def sample(data, count=None):
+def sample(data, count=1, axis=None):
     """
     Get random sample data. If count is None, return random element.
     Sampling is without replacement.
     """
     
-    if count is None: return data[randint(len(data))]
-    elif count == 0: return None
-    else: return data.flat[sample_draw(count, data.size)]
+    if count == 0: return None
 
+    if axis is None: view = data.flat
+    else: view = data.swapaxes(0, axis)
+    
+    result = view[sample_draw(count, len(view))]
+    return result.swapaxes(axis or 0, 0)
+    
 
 def sample_where(data, count=None):
     """
