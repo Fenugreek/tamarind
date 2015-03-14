@@ -277,7 +277,7 @@ class Datab(numpy.ndarray):
                            subtype._read_from_file(filename_or_data, spec, separator, match_pattern,
                                                    select_field_values, skip_field_values,
                                                    select_fields, skip_fields, logger=logger)
-                if spec is None: spec = file_spec
+                if spec is None or select_fields or skip_fields: spec = file_spec
             else: data = filename_or_data
             if data is None:
                 if None_OK: return None
