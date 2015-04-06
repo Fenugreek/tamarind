@@ -100,8 +100,8 @@ class Logger(object):
 
         stamp = timestamp()
         if self.level_value <= level:
-            sys.stderr.write('[%-5s %s %s] %s\n' %
-                             (Logger.level_str[level], self.name, stamp, text))
+            sys.stderr.write('[{:<5} {} {}] {}\n'.format(Logger.level_str[level],
+                                                         self.name, stamp, text))
 
         if (level and self.store_history) or \
            (not level and self.store_history_notset):
@@ -111,24 +111,24 @@ class Logger(object):
     
 
     def debug(self, text, *args):
-        return self._handle(Logger.level_value['debug'], text % args)
+        return self._handle(Logger.level_value['debug'], text.format(*args))
 
     def info(self, text, *args):
-        return self._handle(Logger.level_value['info'], text % args)
+        return self._handle(Logger.level_value['info'], text.format(*args))
 
     def warning(self, text, *args):
-        return self._handle(Logger.level_value['warning'], text % args)
+        return self._handle(Logger.level_value['warning'], text.format(*args))
 
     def error(self, text, *args):
-        return self._handle(Logger.level_value['error'], text % args)
+        return self._handle(Logger.level_value['error'], text.format(*args))
 
     def critical(self, text, *args):
-        result = self._handle(Logger.level_value['critical'], text % args)
+        result = self._handle(Logger.level_value['critical'], text.format(*args))
         if self.critical_exit:
-            sys.exit('[%-5s %s %s] Exiting...' %
-                     (Logger.level_str[result[1]], self.name, result[0]))
+            sys.exit('[{:<5} {} {}] Exiting...'.format(Logger.level_str[result[1]],
+                                                       self.name, result[0]))
         else: return result
 
     def notset(self, text, *args):
-        return self._handle(Logger.level_value['notset'], text % args)
+        return self._handle(Logger.level_value['notset'], text.format(*args))
 
