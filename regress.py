@@ -85,13 +85,14 @@ class Regress(object):
         else: self.constant = True
                 
         if 'names' in opts and opts['names'] is not None:
+            if numpy.isscalar(opts['names']):
+                opts['names'] = [opts['names'] + str(i) for i in range(self.npreds)]
             self.names = opts['names']
-            if numpy.isscalar(self.names): self.names = [self.names]
             if len(self.names) != self.npreds:
                 raise AssertionError('Number of names supplied should match npreds.')
             del opts['names']
         else: self.names = ['pred'+str(i) for i in range(self.npreds)]
-        if self.constant: self.names = ['constant'] + self.names
+        if self.constant: self.names = ['const'] + self.names
 
         self.statistics = {'residual_squares': numpy.nan,
                            'residual': numpy.nan,
@@ -232,7 +233,7 @@ class Datab(stats.Datab):
     spec = (('size', int, '%7d'), ('count', int, '%7d'),
             ('d_count', float, '%8.1f'), ('mean_wt', float, '%7.3f'),
             ('R2', float, '%7.4f'), ('coefficients', float, '%10.6f'),
-            ('t-stat', float, '(%7.3f)'), ('sigma', float, '[%9.6f]'),)
+            ('t-stat', float, '(%5.2f)'), ('sigma', float, '[%9.6f]'),)
     spec_index = dict([(f[0], i) for i, f in enumerate(spec)])
     spec_d = dict([[s[0], s] for s in spec])
 
@@ -545,4 +546,24 @@ def loop_summary(responses, predictors, weights=None, constant=True, names=None,
 
     output = Datab(output, name=name, formats=formats)
     output.output(**opts)
+    
+
+def panel_summary(response, predictors, weights=None, constant=True, names=None,
+                 sliced=None, select=None, overlay=None,
+                 labels=None, formats=None, **opts):
+    """
+    Calls summary() in a loop, adding one predictor at a time.
+    """
+
+    output = []
+    count = 0
+    summary(response, predictors, weights=weights, constant=constant,
+            names=names, sliced=sliced, overlay=overlay, select=select,
+            labels=labels, formats=formats, **opts)
+
+    opts['print_header'] = False
+    for i in range(predictors.shape[-1] - 1):
+        summary(response, predictors[::,:-1-i], weights=weights, constant=constant,
+                sliced=sliced, overlay=overlay, select=select,
+                labels=labels, formats=formats, **opts)
     
