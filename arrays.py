@@ -61,6 +61,19 @@ def toward_zero(data, value):
     return results
 
 
+def per_cap(data, caps):
+    """
+    Return values in data clipped between %le values of (caps[0], caps[1]).
+    If caps is a scalar, only large values are capped.
+    """
+
+    if numpy.isscalar(caps):
+        return numpy.fmin(data, numpy.percentile(data, caps))
+
+    low, high = numpy.percentile(data, caps)
+    return numpy.clip(data, low, high)
+
+
 def argsort(data, reverse=False, last_dim=False, mask=None, order=None):
     """
     Returns indices, a la numpy.where(), which would sort the data array.
