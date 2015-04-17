@@ -207,7 +207,7 @@ class Sparse(object):
     @classmethod
     def stats(cls, data, weights=None, axis=None, step=1, sliced=None, select=None,
               overlay=None, split=None, buckets=None, group=None,
-              labels=None, label_index=None, label_all='All', label_other='Other', 
+              labels=None, label_index=None, label_all=None, label_other='Other', 
               negative_weights=None, IDs=None,
               datab=None, name=None, formats=None, **opts):
         """
@@ -426,15 +426,15 @@ class Full(Sparse):
     Store the values, so as to produce median and percentile values.
     """
 
-    default_percentiles = [[0.99, '99th_%le'],
-                           [0.95, '95th_%le'],
-                           [0.90, '90th_%le'],
-                           [0.75, '75th_%le'],
+    default_percentiles = [[0.99, '99th%le'],
+                           [0.95, '95th%le'],
+                           [0.90, '90th%le'],
+                           [0.75, '75th%le'],
                            [0.50, 'median'],
-                           [0.25, '25th_%le'],
-                           [0.10, '10th_%le'],
-                           [0.05, '5th_%le'],
-                           [0.01, '1st_%le']]
+                           [0.25, '25th%le'],
+                           [0.10, '10th%le'],
+                           [0.05, '5th%le'],
+                           [0.01, '1st%le']]
 
     def __init__(self, *args, **opts):
         self.data = None
@@ -798,7 +798,7 @@ class Datab(db.Datab):
             ('sum', float, '%8.1f'), ('mean', float, '%8.4f'),
             ('std_dev', float, '%8.4f'), ('t-stat', float, '%7.3f'),
             ('median', float, '%8.4f'), ('mad', float, '%8.4f'),
-            ('25th_%le', float, '%8.4f'), ('75th_%le', float, '%8.4f'),
+            ('25th%le', float, '%8.4f'), ('75th%le', float, '%8.4f'),
             ('correlation_ij', float, '%7.4f'), ('multiple_ij', float, '%10.6f'),
             ('std_err', float, '%8.6f'), ('variance', float, '%8.6f'),
             ('min', float, '%8.3f'), ('max', float, '%8.3f'),
@@ -944,15 +944,15 @@ class Datab(db.Datab):
 
 
 def summary(*args, **kwargs):
-    Sparse.summary(*args, **kwargs)
+    Full.summary(*args, **kwargs)
 
     
 def loop_summary(*args, **kwargs):
-    Sparse.loop_summary(*args, **kwargs)
+    Full.loop_summary(*args, **kwargs)
 
     
 def stats(*args, **kwargs):
-    return Sparse.stats(*args, **kwargs)
+    return Full.stats(*args, **kwargs)
 
 
 def bucketer(*data_field_splits, **kwargs):
@@ -985,8 +985,8 @@ def bucketer(*data_field_splits, **kwargs):
         return _recurse_buckets(overlays_labels, new_overs, new_labels)
 
     
-    label_all = kwargs['label_all'] if 'label_all' in kwargs else 'All'
-    label_other = kwargs['label_other'] if 'label_other' in kwargs else 'Other'
+    label_all = kwargs.get('label_all', 'All')
+    label_other = kwargs.get('label_other', 'Other')
 
     formats = kwargs['formats'] if 'formats' in kwargs else '%6.1f'
     fmt = formats + '_%-' + formats[1:]
