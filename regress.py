@@ -40,7 +40,8 @@ class Regress(object):
 
     npreds: Number of predictors.
     weighted: Whether weights accompany datapoints. Defaults to False
-    store_last (default False): Store values processed by last call to update().
+    store_last, store_all (default False, False):
+    Store values processed by last call / all calls to update().
 
     ATTRIBUTES
 
@@ -107,16 +108,14 @@ class Regress(object):
             self.statistics['mean_wt'] = numpy.nan
             self.statistics['d_count'] = 0.0
 
-        if 'store_last' in opts: store_last = opts['store_last']
-        else: store_last = False
         if len(data) and len(responses):
             self.Multivariate = stats.Multivariate(\
-                numpy.ma.hstack((predictors, responses[:, numpy.newaxis])),
-                weights=weights, store_last=store_last)
+                numpy.ma.hstack((predictors, responses[:, numpy.newaxis])), weights=weights,
+                store_last=opts.get('store_last'), store_all=opts.get('store_all'))
         else:
             self.Multivariate = stats.Multivariate(\
-                nvars=self.npreds + 1, weighted=self.weighted, store_last=store_last)
-
+                nvars=self.npreds + 1, weighted=self.weighted,
+                store_last=opts.get('store_last'), store_all=opts.get('store_all'))
 
 
     def update(self, responses, predictors, weights=None):
@@ -134,19 +133,23 @@ class Regress(object):
 
 
     def compute(self, responses=None, predictors=None, weights=None,
-                forecast=False, errors=False, use_last=True):
+                forecast=False, errors=False, redundancy=1.0,
+                use_last=None, use_all=None):
         """
         If constant=True when object initialized, first entry of arrays such as
         'coefficients', 't-stat' refer to the constant.
 
         If responses, predictors (and weights if object is weighted) are given,
-        residual statistics are computed based on these. Otherwise, if use_last is
-        True and if object was initialized with store_last=True, uses last update
-        vales for the residual statistics.
+        residual statistics are computed based on these. Otherwise, if use_last/all
+        is True and if object was initialized with store_last/all=True, uses
+        last/all update values for the residual statistics.
 
         forecast, errors:
         Set these flags to store predicted values and the sigma around them in
         self.statistics['forecast'] and self.statistics['errors'] respectively.
+
+        redundancy:
+        divide t-stats by sqrt(redundancy); useful when datapoints are repeated.
         """
 
         m_stats = self.Multivariate.compute()
@@ -168,7 +171,11 @@ class Regress(object):
         statistics['coefficients'] = numpy.sum(XTXi * XTY, axis=1)
 
         if responses is None or predictors is None:
-            if use_last and self.Multivariate.last_update is not None:
+            if self.Multivariate.all_update is not None and use_all is not False:
+                values = numpy.concatenate([u[0] for u in self.Multivariate.all_update])
+                weights = numpy.concatenate([u[1] for u in self.Multivariate.all_update])
+                responses, predictors = values[:, -1], values[:, :-1]
+            elif self.Multivariate.last_update is not None and use_last is not False:
                 values, weights, valid = self.Multivariate.last_update
                 responses, predictors = values[:, -1], values[:, :-1]
             else: return statistics
@@ -208,7 +215,7 @@ class Regress(object):
             else: d_count = m_stats['count_ij'][i, i]
             statistics['sigma'][i] = numpy.sqrt(covariance)
             statistics['t-stat'][i] = statistics['coefficients'][i] * \
-                                      numpy.sqrt(d_count / covariance)
+                                      numpy.sqrt(d_count / covariance / redundancy)
         
         return statistics
 
@@ -243,6 +250,7 @@ class Datab(stats.Datab):
     def __new__(subtype, results, names=None, name='key',
                 formats=None, **datab_args):
 
+        if type(results) == dict: results = [results]
         first_result = results[0]
         if names is None: names = first_result['names']
 
@@ -281,7 +289,6 @@ class Datab(stats.Datab):
                         for index, result in enumerate(results):
                             row_stats[index].append(result[field][count] if
                                                     result[field] is not None else numpy.nan)
-
 
         obj = db.Datab.__new__(subtype, [tuple(r) for r in row_stats],
                                my_spec, index=name, **datab_args)
@@ -322,9 +329,6 @@ def regress(responses, predictors, weights=None, constant=True,
     data can be two dimensional, and axis can be 0 or 1. In this case,
     a list of statistics-records is returned, in Datab form.
 
-    overlay:
-    run stats only for records selected by this mask.
-
     split:
     run stats for all records, records selected by this mask, and for
     the others, returning a 3-tuple of results. Does not work with axis
@@ -337,8 +341,8 @@ def regress(responses, predictors, weights=None, constant=True,
     group:
     bucket stats by values in this field.
 
-    sliced:
-    run stats for records selected by this slice.
+    sliced, overlay, select:
+    run stats for records selected by this slice, overlay or selection.
 
     step:
     When axis option is specified, clump these many rows together for each row
@@ -377,7 +381,7 @@ def regress(responses, predictors, weights=None, constant=True,
     If using datab format, use this to pretty print floats. Defaults to '%9.6f'.
     """
 
-    if datab is None: datab = True
+    if datab is None: datab = not(forecast) and not(errors)
     if datab == True:
         # datab output cannot hold forecasts or errors per datapoint
         forecast = False
@@ -485,6 +489,17 @@ def regress(responses, predictors, weights=None, constant=True,
 
     if datab is False: return results
     else: return Datab(results, name=name or 'key', formats=formats)
+
+
+def forecast(responses, predictors, *args, **kwargs):
+    """
+    Convenience wrapper that returns the model output after running regression.
+    """
+
+    kwargs['datab'] = False
+    kwargs['forecast'] = True
+    result = regress(responses, predictors, *args, **kwargs)
+    return result['forecast']
 
 
 def summary(responses, predictors, weights=None, constant=True,
