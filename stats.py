@@ -536,14 +536,16 @@ class Multivariate(Sparse):
     nvars: Number of variables in each datapoint.
     weighted: Whether weights accompany datapoints. Defaults to False
     store_last: Store values processed by last call to update().
+    store_all: Store values processed by all calls to update().
 
     ATTRIBUTES
 
     statistics:
     statistics computed so far. Needs call to obj.compute() to refresh.
 
-    last_update:
-    values processed by last call to update().
+    last_update, all_update:
+    values processed by last/all call(s) to update(), if store_last/all specified
+    during object construction.
     
     Sparse[i]:
     Sparse statistics object for each of the variables.
@@ -605,6 +607,10 @@ class Multivariate(Sparse):
         if 'store_last' in opts and opts['store_last']:
             self.last_update = True
         else: self.last_update = None
+
+        if 'store_all' in opts and opts['store_all']:
+            self.all_update = []
+        else: self.all_update = None
 
         self.statistics = {'mean_ij': numpy.zeros((self.nvars, self.nvars)) + numpy.nan,
                            'variance_ij': numpy.zeros((self.nvars, self.nvars)) + numpy.nan,
@@ -677,6 +683,7 @@ class Multivariate(Sparse):
         self.sum_ww += numpy.sum(weights[valid] ** 2)
 
         if self.last_update is not None: self.last_update = (values, weights, valid)
+        if self.all_update is not None: self.all_update.append((values, weights, valid))
     
 
     def compute(self):
