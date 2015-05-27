@@ -135,7 +135,10 @@ class Sparse(object):
             elif weights is None:
                 raise AssertionError('Weighted statistics object received no weights in update.')
             weights = arrays.nice_array(weights, shape=values.shape, logger=self.logger)
-            mask = mask | weights.mask | (weights <= 0)
+            mask |= weights.mask
+            # Following contortion to avoid bogus
+            #    "RuntimeWarning: Invalid value encountered in less_equal"
+            mask[~mask] = (weights[~mask] <= 0)
             fweights = weights.flatten()
         else:
             if weights is not None:
