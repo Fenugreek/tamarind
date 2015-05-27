@@ -457,7 +457,7 @@ class Datab(numpy.ndarray):
                select_values=None, skip_values=None, 
                sort=None, reverse=False, sliced=None, unique=None,
                filename=None, append=False, fh=None, stringify=False,
-               print_spec=None, print_header=None, line_space=0):
+               print_spec=None, print_header=None, line_space=0, delimiter=' '):
         """
         Print to screen, or file filename or file handle fh, the records
         given by indices (default all).
@@ -550,7 +550,7 @@ class Datab(numpy.ndarray):
                 if skip_field in fields: fields.remove(skip_field)
 
         if print_spec or print_header:
-            print >>fh, self.header(fields=fields, spec=print_spec, rename=rename)
+            print >>fh, self.header(fields=fields, spec=print_spec, rename=rename, delimiter=delimiter)
 
         if indices is None: records = self
         else: records = self[indices]        
@@ -577,7 +577,7 @@ class Datab(numpy.ndarray):
                 if record[field] == '': record[field] = '#NA'
                 strings.append(field_format[field] % record[field])
             if line_space and line_count and line_count % line_space == 0: print ''
-            print >>fh, ' '.join(strings)
+            print >>fh, delimiter.join(strings)
             line_count += 1
 
         if stringify: return fh.getvalue()
@@ -585,7 +585,7 @@ class Datab(numpy.ndarray):
         if filename: fh.close()
 
 
-    def header(self, spec=False, fields=None, exclude=[], rename=[]):
+    def header(self, spec=False, fields=None, exclude=[], rename=[], delimiter=' '):
         """
         Return header, as the string that would be output by the output() method.
         """
@@ -606,7 +606,7 @@ class Datab(numpy.ndarray):
                      '#formats ' + ' '.join([self.field_spec[i][2] for i in fields])]
             return '\n'.join(lines)
         else:
-            return ' '.join([strings.fmt(field_name[f], self.field_spec[f][2])
+            return delimiter.join([strings.fmt(field_name[f], self.field_spec[f][2])
                              for f in fields])
 
         
