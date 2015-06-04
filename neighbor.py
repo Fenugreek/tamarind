@@ -5,20 +5,13 @@ from __future__ import division
 import numpy as np
 import tamarind.stats
 
-def rd_weights(weights, index=0, offset=0.5, clips=(.25, 4)):
-    if offset: weights = weights + offset
+def reciprocal_weights(distances, scale=1, power=1):
 
-    rd_weights = np.ones(len(weights))
-    if len(weights) > index+1:
-        rd_weights[index+1:] = weights[index] / weights[index+1:]
-    if index > 0 and len(weights) > index:
-        rd_weights[:index] = weights[index] / weights[:index]
-
-    return np.clip(rd_weights, *clips)
+    return (1 / (1 + distances*scale))**power
 
 
 def stats(response, distance_matrix, knn, weights=None, cutoff=None,
-          distance_weights=None):
+          reciprocal=None):
 
     nearest = np.argsort(distance_matrix, axis=1)[:, 1:]
     r_stats, d_stats, neighbors = [], [], []
@@ -37,7 +30,7 @@ def stats(response, distance_matrix, knn, weights=None, cutoff=None,
             
         if weights is not None:
             w = weights[row[:len(distances)]]
-            if distance_weights: w *= distance_weights(distances)
+            if reciprocal: w *= reciprocal_weights(distances, *reciprocal)
         elif distance_weights: w = distance_weights(distances)
         else: w = None
 
