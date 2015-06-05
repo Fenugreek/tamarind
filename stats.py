@@ -453,7 +453,11 @@ class Full(Sparse):
         if numpy.isscalar(self.last_update): return
         values, weights, IDs = self.last_update
         if not len(values): return
-        mask = values.mask | weights.mask | (weights <= 0.0)
+        mask = values.mask | weights.mask 
+        # Following contortion to avoid bogus
+        #    "RuntimeWarning: Invalid value encountered in less_equal"
+        mask[~mask] = (weights[~mask] <= 0)
+
         valid_values = values[~mask]
         if not len(valid_values): return
 
