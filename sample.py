@@ -24,7 +24,7 @@ def sample_draw(count, size):
         deck[index] = deck[swap_index]
         deck[swap_index] = current
         
-        return deck[:count]
+    return deck[:count]
 
 
 def sample(data, count=1, axis=None):
