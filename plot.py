@@ -55,6 +55,33 @@ def multiple(columns, data, vertical_lines=None, axis=None, xlim=None, ylim=None
         if plotline_values is not None: lines(vertical_lines)
 
 
+def twin(data, colors=['Blue', 'Red'], ylabels=['y1', 'y2'], xlabel='x',
+         func=['plot', 'plot'], ylims=[None, None], kwargs=[{}, {}]):
+    """
+    Make two plots on the same figure, with different y axes.
+    """
+    fig, ax = pyplot.subplots()
+
+    # Twin the x-axis to make independent y-axes.
+    axes = [ax, ax.twinx()]
+    for i in range(2):
+        ax, color, args = axes[i], colors[i], data[i]
+        
+        plot_func = getattr(ax, func[i])
+        if type(args) == tuple: plot_func(*args, color=color, **kwargs[i])
+        else: plot_func(args, color=color, **kwargs[i])
+
+        if ylims[i] is not None: ax.set_ylim(*ylims[i])
+
+        ax.set_ylabel(ylabels[i], color=color)
+        ax.tick_params(axis='y', colors=color)
+        
+    axes[0].set_xlabel(xlabel)
+    pyplot.show()
+    
+    return axes
+
+
 def lines(values, axis=1, line_args='k'):
     """
     Plot straight lines at each axis value, in black.
