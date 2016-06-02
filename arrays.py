@@ -27,53 +27,6 @@ def isnanzero(data):
     return numpy.isnan(data) | (data==0)
 
 
-def dir_clip(data, clips):
-    """
-    'Directional' clip. Dimension of data and clips must be the same. Values in data
-    are clipped according to corresponding values in clips and returned as a new array.
-    new_value = portion of value between 0 and clip.
-    If clip is nan, new_value = value.
-    """
-    
-    if isinstance(data, numpy.ndarray): results = data.copy()
-    else: results = numpy.array(data)
-
-    mask = (numpy.sign(data) != numpy.sign(clips)) \
-            & ~numpy.isnan(data) & ~numpy.isnan(clips)
-    results[mask] = 0.0
-    mask = ~mask & (abs(data) > abs(clips))
-    results[mask] = clips[mask]
-    return results
-
-
-def toward_zero(data, value):
-    """
-    Subtract value from postive values of data, and add value to negative values
-    of data. Do not cross zero.
-    """
-
-    results = data.copy()
-    results[data > 0] -= value
-    results[data < 0] += value
-    results[(data > 0) & (results < 0)] = 0.0 
-    results[(data < 0) & (results > 0)] = 0.0 
-
-    return results
-
-
-def per_cap(data, caps):
-    """
-    Return values in data clipped between %le values of (caps[0], caps[1]).
-    If caps is a scalar, only large values are capped.
-    """
-
-    if numpy.isscalar(caps):
-        return numpy.fmin(data, numpy.percentile(data, caps))
-
-    low, high = numpy.percentile(data, caps)
-    return numpy.clip(data, low, high)
-
-
 def argsort(data, reverse=False, last_dim=False, mask=None, order=None):
     """
     Returns indices, a la numpy.where(), which would sort the data array.
