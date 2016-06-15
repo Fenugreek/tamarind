@@ -1,7 +1,7 @@
 Panel Data and Numpy Utils
 ====================
 
-Python and numpy based library for housing, examining and modeling panel data. Some additional numpy utilities are implemented.
+Python and numpy based library for housing, examining and modeling tabular panel data. Some additional numpy utilities are implemented.
 
 ### Notable modules:
 - **datab** :
@@ -24,7 +24,8 @@ From the directory where you downloaded the files, run the following command-lin
 
 Or simply place all files into a directory called `tamarind/` somewhere in your `$PYTHONPATH`.
 
+**Dependencies** : numpy, scipy.
+
 Synopsis
 ---------------
-
 Under construction.
