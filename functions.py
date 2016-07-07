@@ -83,5 +83,11 @@ def softmax(data, axis=None, eps=1e-8):
 
 def sigmoid(data):
     """Sigmoid activation function."""
-    
+
     return 1 / (1 + np.exp(-data))
+
+
+def logit(data, eps=1e-8):
+    """Inverse of the sigmoid function."""
+
+    return -np.log(1 / (data + eps) - 1 + eps)
