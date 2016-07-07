@@ -159,7 +159,7 @@ def plot(x, y, x_weights=None, y_weights=None, size=0.05,
     pyplot.plot(x_values, y_stats[y_statistic], *line_args)
 
     if not error_band: return
-    if line_args and numpy.isscalar(error_args): line_args = [error_args]
+    if error_args and numpy.isscalar(error_args): error_args = [error_args]
     pyplot.plot(x_values, y_stats[y_statistic] + y_stats[error_statistic] * error_band, *error_args)
     pyplot.plot(x_values, y_stats[y_statistic] - y_stats[error_statistic] * error_band, *error_args)
 
