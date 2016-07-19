@@ -97,11 +97,23 @@ def lines(values, axis=1, line_args='k'):
     pyplot.axis(ranges)
 
 
-def summary(values, axis=0, statistic='mean',
+def summary(values, axis=0, statistic='mean', x_values=None,
             error_band=1, error_statistic='std_err',
             line_args=[], error_args=['g']):
     """
-    Given 2D values, plot summary statistic along one dimension.
+    Given 2D values, plot summary statistic along <axis> dimension.
+
+    statistic:
+    Plot this statistic of the values in given <axis>.
+    
+    x_values:
+    Plot summary statistic against this. Default is just the index of <values>.
+
+    error_statistic, error_band:
+    Plot also this statistic, as +/- <error_band> times <error_statistic>.
+
+    line_args, error_args:
+    Pass these to plot() call.
     """
     
     cls = 'Sparse'
@@ -110,12 +122,17 @@ def summary(values, axis=0, statistic='mean',
         if stat in ('median', 'mad') or stat[-2:] == 'le': cls = 'Full'
 
     s = getattr(stats, cls).stats(values, axis=axis, label_all=None)
-    x_values = s[statistic]
+    y_values = s[statistic]
+    if x_values is None: x_values = range(len(y_values))
     
     if line_args and numpy.isscalar(line_args): line_args = [line_args]
-    pyplot.plot(x_values, *line_args)
+    pyplot.plot(x_values, y_values, *line_args)
 
     if not error_band: return
     if error_args and numpy.isscalar(error_args): error_args = [error_args]
-    pyplot.plot(x_values + s[error_statistic] * error_band, *error_args)
-    pyplot.plot(x_values - s[error_statistic] * error_band, *error_args)
+    pyplot.plot(x_values,
+                y_values + s[error_statistic] * error_band,
+                *error_args)
+    pyplot.plot(x_values,
+                y_values - s[error_statistic] * error_band,
+                *error_args)
