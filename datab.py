@@ -91,13 +91,16 @@ class Datab(numpy.ndarray):
         if select_fields and skip_fields:
             raise AssertionError('Cannot specify both select_fields and skip_fields options')
 
-        if not os.path.isfile(filename):
-            if os.path.isfile(filename + '.gz'): filename += '.gz'
-            else:
-                logger.info('Returning None because file does not exist: %s', filename)
-                return None, None
-        if filename[-3:] == '.gz': stream = gzip.open(filename)
-        else: stream = open(filename)
+        if 'file' in str(type(filename)):
+            stream = filename
+        else:
+            if not os.path.isfile(filename):
+                if os.path.isfile(filename + '.gz'): filename += '.gz'
+                else:
+                    logger.info('Returning None because file does not exist: %s', filename)
+                    return None, None
+            if filename[-3:] == '.gz': stream = gzip.open(filename)
+            else: stream = open(filename)
         lines = stream.readlines()
 
         file_separator = None
@@ -188,6 +191,16 @@ class Datab(numpy.ndarray):
         return spec, separator
 
 
+    @staticmethod
+    def dict2tuple(rows, spec):
+        results = []
+        fields = [s[0] for s in spec]
+        for row in rows:
+            results.append(tuple([row.get(f) for f in fields]))
+
+        return results
+
+    
     def __new__(subtype, filename_or_data=None, spec=None, add_spec=None, shape=None,
                 index=None, identifier=None, sort=None, reverse=False,
                 select_fields=[], skip_fields=[],
@@ -272,7 +285,8 @@ class Datab(numpy.ndarray):
             if (shape is None) or (spec is None): raise ValueError('Must specify shape and spec if no filename/data')
             data = None
         else:
-            if 'str' in str(type(filename_or_data)):
+            type_str = str(type(filename_or_data))
+            if 'str' in type_str or 'file' in type_str:
                 file_spec, data = \
                            subtype._read_from_file(filename_or_data, spec, separator, match_pattern,
                                                    select_field_values, skip_field_values,
@@ -283,6 +297,8 @@ class Datab(numpy.ndarray):
                 if None_OK: return None
                 raise ValueError('could not load %s' % filename_or_data)
 
+        if type(data[0]) == dict: data = subtype.dict2tuple(data, spec)
+        
         if spec is None and isinstance(data, numpy.ndarray):
             spec = data.dtype.descr
         full_spec = [list(s) for s in spec]
