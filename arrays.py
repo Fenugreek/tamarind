@@ -8,7 +8,7 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
-
+from __future__ import division
 import numpy
 
 
@@ -141,6 +141,37 @@ def rank(data, axis=None, reverse=False, mask=None):
             indices_rank[ndindex][index] = rank
 
     return indices_rank.swapaxes(-1, axis)
+
+
+def percentile(data, weights=None, axis=None, reverse=False, mask=None):
+    """
+    Returns percentile rank of elements in given array.
+
+    mask:
+    mask with same dimensions as data with True where elements are to be ignored.
+    """
+    
+    if weights is None: weights = numpy.ma.ones(numpy.shape(data))
+    else: weights = nice_array(weights)
+    
+    if axis is None:
+        sort_indices = argsort(data, reverse=reverse, mask=mask)
+        cum_weights = numpy.ma.cumsum(weights[sort_indices])
+        percentiles = nans(weights.shape)
+        percentiles[sort_indices] = cum_weights / numpy.max(cum_weights)
+        return percentiles
+        
+    if not isinstance(data, numpy.ndarray): data = numpy.array(data)    
+    sort_indices = argsort(data.swapaxes(axis, -1), mask=mask,
+                           reverse=reverse, last_dim=True)
+
+    percentiles = nans(data.swapaxes(axis, -1).shape)
+    weights = weights.swapaxes(axis, -1)
+    for ndindex, sort_list in numpy.ndenumerate(sort_indices):
+        cum_weights = numpy.ma.cumsum(weights[ndindex][sort_list])
+        percentiles[ndindex][sort_list] = cum_weights / numpy.max(cum_weights)
+
+    return percentiles.swapaxes(-1, axis)
 
 
 def nice_array(values, shape=None, logger=None, copy=False):
@@ -365,6 +396,20 @@ def index_array(records, keys, field=None, arg=False):
         else: layer[key_values[-1]] = record
 
     return output
+
+
+def autocorr(arr):
+    """
+    Returned lagged autocorrelation coefficients of given 1D array.
+    Lags are up to half the length of input array, starting with lag of 1.
+    """
+    
+    length = len(arr)//2
+    results = numpy.empty(length)
+    for i in range(1, length + 1):
+        results[i - 1] = numpy.corrcoef(arr[:-i], arr[i:])[1, 0]
+
+    return results
 
     
 def rolling_window(a, size, offset=1):
