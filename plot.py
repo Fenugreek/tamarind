@@ -97,7 +97,7 @@ def lines(values, axis=1, line_args='k'):
     pyplot.axis(ranges)
 
 
-def summary(values, axis=0, statistic='mean', x_values=None,
+def summary(values, axis=0, statistic='mean', x_values=None, weights=None,
             error_band=1, error_statistic='std_err',
             line_args=[], error_args=['g']):
     """
@@ -105,6 +105,10 @@ def summary(values, axis=0, statistic='mean', x_values=None,
 
     statistic:
     Plot this statistic of the values in given <axis>.
+
+    weights:
+    Use this array as weights for <values> when computing
+    statistic and error_statistic.
     
     x_values:
     Plot summary statistic against this. Default is just the index of <values>.
@@ -121,7 +125,8 @@ def summary(values, axis=0, statistic='mean', x_values=None,
         if not stat: continue
         if stat in ('median', 'mad') or stat[-2:] == 'le': cls = 'Full'
 
-    s = getattr(stats, cls).stats(values, axis=axis, label_all=None)
+    s = getattr(stats, cls).stats(values, axis=axis, label_all=None,
+                                  weights=weights)
     y_values = s[statistic]
     if x_values is None: x_values = range(len(y_values))
     
