@@ -91,3 +91,27 @@ def logit(data, eps=1e-8):
     """Inverse of the sigmoid function."""
 
     return -np.log(1 / (data + eps) - 1 + eps)
+
+
+def elu(data, copy=True):
+    """Exponential LU activation function."""
+
+    if copy: result = data.copy()
+    else: result = data
+    
+    mask = data < 0
+    result[mask] = np.exp(data[mask]) - 1.0
+
+    return result
+
+
+def ielu(data, copy=True, eps=1e-8):
+    """Inverse exponential LU activation function."""
+
+    if copy: result = data.copy()
+    else: result = data
+    
+    mask = data < 0
+    result[mask] = np.log(data[mask] + 1.0 + eps)
+
+    return result
