@@ -9,7 +9,55 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 from __future__ import division
+import cPickle
 import numpy
+
+
+def load(fromfile, list=False):
+    """
+    Load from file where array(s) was previously cPickle'd.
+
+    fromfile:
+    filename or file handle.
+    If file handle, file handle is closed before results are returned.
+    
+    list:
+    If True, multiple arrays are returned, as a list;
+    as many as were saved to the file.
+    """
+
+    handle = fromfile if type(fromfile) == file else open(fromfile, 'rb')
+    arr = cPickle.load(handle)
+    if not list:
+        handle.close()
+        return arr
+
+    results = [arr]
+    while True:
+        try: results.append(cPickle.load(handle))
+        except EOFError: break
+
+    handle.close()
+    return results
+
+
+def save(arrs, tofile):
+    """
+    Save array(s) to file using cPickle.
+
+    arrs:
+    A numpy array, or a list of numpy arrays.
+
+    tofile:
+    filename or file handle.
+    If file handle, file handle is not closed after array(s) are saved.    
+    """
+
+    if type(arrs) != list: arrs = [arrs]
+
+    handle = open(tofile, 'wb') if type(tofile) == str else tofile
+    for arr in arrs: cPickle.dump(arr, handle)
+    if type(tofile) == str: handle.close()
 
 
 def nans(shape):
@@ -116,6 +164,21 @@ def index_array(records, keys, field=None, arg=False):
     return output
 
 
+def percentile(arr, quants, weights):
+    """
+    Weighted version of numpy's percentile function.
+    No interpolation is done.
+    """
+    
+    sort_indices = numpy.argsort(arr)
+    sort_weights = weights[sort_indices]
+    cum_weights = numpy.cumsum(sort_weights)
+    cum_weights = cum_weights / cum_weights[-1]
+    indices = numpy.searchsorted(cum_weights, quants)
+
+    return arr[sort_indices][indices]
+
+
 def rank(data, axis=None, reverse=False, mask=None):
     """
     Returns array of integers representing rank of elements in given array.
@@ -143,7 +206,7 @@ def rank(data, axis=None, reverse=False, mask=None):
     return indices_rank.swapaxes(-1, axis)
 
 
-def percentile(data, weights=None, axis=None, reverse=False, mask=None):
+def percentile_rank(data, weights=None, axis=None, reverse=False, mask=None):
     """
     Returns percentile rank of elements in given array.
 
