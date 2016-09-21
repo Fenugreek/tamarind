@@ -40,7 +40,20 @@ def sample(data, count=1, axis=None):
     
     result = view[sample_draw(count, len(view))]
     return result.swapaxes(axis or 0, 0)
+
     
+def sample_each_col(data, count=1):
+    """
+    Get random <count> rows from data, where each column is sampled independently.
+    Sampling is without replacement.
+    """
+    shape = data.shape
+    sample = numpy.empty([count] + list(shape[1:]), dtype=data.dtype)
+    for col in range(shape[1]):
+        draw = sample_draw(count, shape[0])
+        sample[:, col, ...] = data[draw, col, ...]
+    return sample
+
 
 def sample_where(data, count=None):
     """
