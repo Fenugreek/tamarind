@@ -59,9 +59,11 @@ def per_cap(data, caps):
     return np.clip(data, low, high)
 
 
-def unit_scale(data, axis=None, eps=1e-8):
+def unit_scale(data, signed=False, axis=None):
     """
-    Scales all values in the ndarray data to be between 0 and 1.
+    Scales all values in the ndarray data to be between
+     0 and 1 if signed is False,
+    -1 and 1 if signed is True.
 
     Adapted from deeplearning.net's utils.scale_to_unit().
     """
@@ -70,15 +72,20 @@ def unit_scale(data, axis=None, eps=1e-8):
     if axis: result = result.swapaxes(0, axis)
     
     result -= data.min(axis=axis)
-    result /= result.max(axis=0 if axis else axis) + eps
+    max_val = result.max(axis=0 if axis else axis)
+    if signed:
+        result /= max_val / 2.
+        result -= 1.0
+    else:
+        result /= max_val
     
     return result.swapaxes(0, axis) if axis else result
 
 
-def softmax(data, axis=None, eps=1e-8):
+def softmax(data, axis=None):
     """Scale data to unit interval using softmax function."""
     
-    return unit_scale(np.exp(data), axis=axis, eps=eps)
+    return unit_scale(np.exp(data), axis=axis)
 
 
 def sigmoid(data):
