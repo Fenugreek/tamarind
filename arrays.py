@@ -75,6 +75,14 @@ def isnanzero(data):
     return numpy.isnan(data) | (data==0)
 
 
+def plane(data):
+    """
+    Flatten data to 2D, retaining original length of the 1st dimension.
+    If data is 1D, 2nd dimension has length of 1.
+    """
+    return numpy.reshape(data, (data.shape[0], -1))
+
+
 def argsort(data, reverse=False, last_dim=False, mask=None, order=None):
     """
     Returns indices, a la numpy.where(), which would sort the data array.
