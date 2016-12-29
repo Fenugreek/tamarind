@@ -112,7 +112,7 @@ def elu(data, copy=True):
     return result
 
 
-def ielu(data, copy=True, eps=1e-8):
+def ielu(data, copy=True, eps=1e-20):
     """Inverse exponential LU activation function."""
 
     if copy: result = data.copy()
