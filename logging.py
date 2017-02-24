@@ -64,9 +64,9 @@ class Logger(object):
                  50: 'CRIT'}
 
 
-    def __init__(self, name, level, store=False, critical_exit=True, store_notset=False):
+    def __init__(self, name, level, store=False, logfile=None, printer=sys.stderr,
+                 critical_exit=True, store_notset=False):
         """
-
         name:
         Prefix output with this string.
 
@@ -77,6 +77,9 @@ class Logger(object):
         store all calls made to this object and the text associated with them, in
         obj.history. If False, only the most recent call is stored.
 
+        logfile:
+        write all messages to this filehandle, in addition to stderr.
+        
         critical_exit:
         do sys.exit(msg) rather than return(msg) when self.critical(msg) is called.
         """
@@ -85,6 +88,8 @@ class Logger(object):
         self.setLevel(level)
         self.history = []
         self.store_history = store
+        self.logfile = logfile
+        self.printer = printer
         self.store_history_notset = store_notset
         self.critical_exit = critical_exit
 
@@ -99,9 +104,11 @@ class Logger(object):
     def _handle(self, level, text):
 
         stamp = timestamp()
-        if self.level_value <= level:
-            sys.stderr.write('[{:<5} {} {}] {}\n'.format(Logger.level_str[level],
-                                                         self.name, stamp, text))
+        out_str = '[{:<5} {} {}] {}\n'.format(Logger.level_str[level],
+                                              self.name, stamp, text)
+        
+        if self.level_value <= level: self.printer.write(out_str)
+        if self.logfile is not None: self.logfile.write(out_str)
 
         if (level and self.store_history) or \
            (not level and self.store_history_notset):
