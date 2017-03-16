@@ -17,7 +17,7 @@ def _format_inputs(responses, predictors, weights=None):
     if not len(responses): return numpy.array([]), numpy.array([]), numpy.array([])
     responses = nice_array(responses, shape=numpy.size(responses))
     predictors = nice_array(predictors, shape=(len(responses),
-                                               numpy.size(predictors) / len(responses)))
+                                               numpy.size(predictors) // len(responses)))
     if weights is not None:
         weights = nice_array(weights, shape=numpy.shape(responses))
 
