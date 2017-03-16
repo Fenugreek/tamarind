@@ -264,6 +264,9 @@ class Sparse(object):
 
         name:
         in the header, label the key column with this string.
+
+        formats:
+        Default formatting e.g. %7.2f for numeric fields in Datab spec.
         """
 
         if group is not None:
