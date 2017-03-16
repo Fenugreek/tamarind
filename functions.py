@@ -122,3 +122,36 @@ def ielu(data, copy=True, eps=1e-20):
     result[mask] = np.log(data[mask] + 1.0 + eps)
 
     return result
+
+
+def llu(data, copy=True):
+    """
+    Linear-log activation function; linear inside of +/-1.0,
+    log outside of it.
+    """
+
+    if copy: result = data.copy()
+    else: result = data
+    
+    mask = data > 1.0
+    result[mask] = np.log(data[mask]) + 1.0
+
+    mask = data < -1.0
+    result[mask] = -np.log(-data[mask]) - 1.0
+
+    return result
+
+
+def illu(data, copy=True):
+    """Inverse of llu."""
+
+    if copy: result = data.copy()
+    else: result = data
+
+    mask = data > 1.0
+    result[mask] = np.exp(data[mask] - 1.0)
+
+    mask = data < -1.0
+    result[mask] = -np.exp(-data[mask] - 1.0)
+
+    return result
