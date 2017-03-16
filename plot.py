@@ -40,19 +40,35 @@ def overlay(x_values, y_values, *args, **kwargs):
                     *args, **kwargs)
     
     
-def multiple(columns, data, vertical_lines=None, axis=None, xlim=None, ylim=None):
+def multi(data, ylim=None, columns=1, xlim=None, sliced=None,
+          verticals=None, horizontals=None):
     """
     Plot multiple graphs in columns no. of columns.
     vertical_lines is a list of x-values that gets passed onto lines().
+
+    If data is a tuple, the function recursively calls itself for
+    each element in data.
     """
+    if type(data) == tuple:
+        for d in data[:-1]:
+            multi(d, columns=columns, sliced=sliced)
+        multi(data[-1], ylim=ylim, columns=columns, sliced=sliced,
+              xlim=xlim, verticals=verticals, horizontals=horizontals)
+        return
+
+    if sliced: data = data[slice(*sliced)]
     rows = numpy.ceil(len(data) / columns)
     for count, records in enumerate(data):
         pyplot.subplot(rows, columns, count+1)
+        records = records.squeeze()
         pyplot.plot(records)
-        if axis is not None: pyplot.axis(axis)
-        if xlim is not None: pyplot.xlim(xlim)
         if ylim is not None: pyplot.ylim(ylim)
-        if plotline_values is not None: lines(vertical_lines)
+        if xlim is not False:
+            if xlim is None: pyplot.xlim([0, len(records)])
+            else: pyplot.xlim(xlim)
+            
+        if verticals is not None: lines(verticals)
+        if horizontals is not None: lines(horizontals, axis=0)
 
 
 def twin(data, colors=['Blue', 'Red'], ylabels=['y1', 'y2'], xlabel='x',
