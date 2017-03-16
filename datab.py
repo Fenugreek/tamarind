@@ -282,7 +282,8 @@ class Datab(numpy.ndarray):
         if type(logger) == str: logger = logging.Logger('Datab', logger)
 
         if filename_or_data is None:
-            if (shape is None) or (spec is None): raise ValueError('Must specify shape and spec if no filename/data')
+            if (shape is None) or (spec is None):
+                raise ValueError('Must specify shape and spec if no filename/data')
             data = None
         else:
             type_str = str(type(filename_or_data))
@@ -292,10 +293,13 @@ class Datab(numpy.ndarray):
                                                    select_field_values, skip_field_values,
                                                    select_fields, skip_fields, logger=logger)
                 if spec is None or select_fields or skip_fields: spec = file_spec
+                if spec is None:
+                    raise ValueError('No spec and could not determine from %s' %
+                                     filename_or_data)
             else: data = filename_or_data
             if data is None:
                 if None_OK: return None
-                raise ValueError('could not load %s' % filename_or_data)
+                raise ValueError('Could not load %s' % filename_or_data)
 
         if type(data[0]) == dict: data = subtype.dict2tuple(data, spec)
         
