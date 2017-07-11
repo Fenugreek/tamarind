@@ -155,3 +155,13 @@ def illu(data, copy=True):
     result[mask] = -np.exp(-data[mask] - 1.0)
 
     return result
+
+
+def sroot(data, power=0.5):
+    """
+    'Signed' square-root (default power = 0.5):
+    raised abs(data) to power, then multiply by sign(data).
+    """
+
+    result = np.abs(data)**power
+    return np.sign(data) * result
