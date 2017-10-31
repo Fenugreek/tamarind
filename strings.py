@@ -60,3 +60,42 @@ def fmt_matrix(mat, format, labels=None):
         result += ' '.join(format % f for f in mat[i]) + '\n'
         
     return result
+
+
+def infer_type(arg_str):
+    """
+    If the string arg_str looks numeric, return int or float, else return str.
+    """
+
+    try:
+        result = int(arg_str)
+    except:
+        try:
+            result = float(arg_str)
+        except:
+            return str
+        return float
+    return int
+
+        
+def args2dict(arg_strs):
+    """
+    Given a list of command-line arguments, like
+        ['level=INFO', 'layers=2', 'rate=0.5'],
+    return dict like
+        {'level': 'INFO', 'layers':2, 'rate':.5}
+    with appropriate type conversions for the values inferred
+    (in above example, retain as string, convert to int, convert to float).
+
+    If commas present after the '=' delimiter, value is a list.
+    """
+    
+    kwargs = {}
+    for option in arg_strs or []:
+        key, value = option.split('=')
+        if ',' in value:
+            kwargs[key] = [infer_type(v)(v) for v in value.split(',')]
+        else:
+            kwargs[key] = infer_type(value)(value)
+
+    return kwargs
