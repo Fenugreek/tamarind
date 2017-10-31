@@ -353,8 +353,6 @@ class Sparse(object):
             raise ValueError('Axis option value 0 is the only one supported for Multivariate stats.')
 
         if weights is not None and weights.ndim == 1 and data.ndim == 2:
-#            print numpy.shape(data)
-#            print numpy.shape(weights)
             if len(weights) != numpy.shape(data)[1]:
                 raise ValueError('shape mismatch: 1D weights cannot be broadcast to shape of values')
             sys.stderr.write('stats.stats: Broadcasting 1D weights for 2D values.\n')
@@ -391,7 +389,7 @@ class Sparse(object):
 
     @classmethod
     def summary(cls, data, weights=None, include=None, exclude=None, fields=None,
-                all=False, filename=None, line_space=0, **opts):
+                all=False, filename=None, line_space=0, stringify=False, **opts):
         """
         Convenience wrapper that, roughly speaking, calls cls.stats(data)
         and then prints results in nice tabulated form, using stats.Datab.
@@ -399,13 +397,18 @@ class Sparse(object):
         See cls.stats() for documentation on supported options.
         """
         stats_data = cls.stats(data, weights=weights, datab=True, **opts)
-        stats_data.output(include=include, exclude=exclude, fields=fields, all=all,
-                          filename=filename, line_space=line_space)
+        if len(stats_data) == 1 and 'name' not in opts:
+            #Get rid of redundant key column.
+            if exclude is None: exclude = ['key']
+            else: exclude.append('key')
+        return stats_data.output(include=include, exclude=exclude, fields=fields, all=all,
+                                 filename=filename, line_space=line_space, stringify=stringify)
 
     
     @classmethod
     def loop_summary(cls, data, weights=None, include=None, exclude=None, fields=None,
-                     labels=None, name='var', formats=None, all=False, **opts):
+                     labels=None, name='var', formats=None, all=False,
+                     stringify=False, **opts):
         """
         Calls summary() in a loop for multiple responses/predictors.
         """
@@ -414,17 +417,16 @@ class Sparse(object):
             raise ValueError('Data needs to be tuple so looping can happen.')
 
         output = []
-        count = 0
         all_labels = []
-        for layer in data:
-            stats_layer = cls.stats(layer, weights=weights, **opts)
+        for count, layer in enumerate(data):
+            w = weights[count] if type(weights) == tuple else weights
+            output.append(cls.stats(layer, weights=w, **opts))
             if labels is not None and len(labels): all_labels.append(labels[count])
-            else: all_labels.append(len(output))
-            output.append(stats_layer)
-            count += 1
+            else: all_labels.append(count)
 
         output = Datab(output, labels=all_labels, name=name, formats=formats)
-        output.output(include=include, exclude=exclude, fields=fields, all=all)
+        return output.output(include=include, exclude=exclude, fields=fields, all=all,
+                             stringify=stringify)
         
 
 class Full(Sparse):
@@ -938,7 +940,9 @@ class Datab(db.Datab):
             super(Datab, self).output(**kwargs)
             return
         
-        if self.identifier is not None: kwargs['fields'] = [self.identifier]
+        if self.identifier is not None and \
+               (exclude is None or self.identifier not in exclude):
+                kwargs['fields'] = [self.identifier]
         else: kwargs['fields'] = []
 
         if all: fields = [s[0] for s in self.spec]
@@ -956,16 +960,16 @@ class Datab(db.Datab):
         for field in fields:
             if exclude is None or field not in exclude: kwargs['fields'].append(field)
 
-        super(Datab, self).output(**kwargs)
+        return super(Datab, self).output(**kwargs)
         
 
 
 def summary(*args, **kwargs):
-    Full.summary(*args, **kwargs)
+    return Full.summary(*args, **kwargs)
 
     
 def loop_summary(*args, **kwargs):
-    Full.loop_summary(*args, **kwargs)
+    return Full.loop_summary(*args, **kwargs)
 
     
 def stats(*args, **kwargs):
