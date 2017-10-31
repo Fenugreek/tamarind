@@ -358,16 +358,21 @@ def nanmask(data, fields=[], overlay=None, copy=True):
     return numpy.ma.array(data, mask=mask, copy=copy)
 
 
-def construct_map(source_IDs, other_ID, overlay=None):
+def construct_map(source_IDs, other_ID_or_IDs, overlay=None):
     """
-    Given a list of symbols, and a dict symbol->index, return a tuple of
-    lists mapping indices from the first list to the second (for elements
-    in intersection of the symbols only).
+    Given a list of symbols, and a dict symbol->index (or another list),
+    return a tuple of lists mapping indices from the first list to the second
+    (for elements in intersection of the symbols only).
 
     overlay:
     boolean list with elements in source_IDs to selectively include in the results.
     """
 
+    if type(other_ID_or_IDs) == dict:
+        other_ID = other_ID_or_IDs
+    else:
+        other_ID = dict((s, i) for i, s in enumerate(other_ID_or_IDs))
+    
     source, other = [], []
     for count, identifier in enumerate(source_IDs):
         if overlay is not None and not overlay[count]: continue
