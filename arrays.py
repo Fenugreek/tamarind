@@ -13,7 +13,7 @@ import cPickle
 import numpy
 
 
-def load(fromfile, list=False):
+def load(fromfile, list=True):
     """
     Load from file where array(s) was previously cPickle'd.
 
@@ -83,6 +83,24 @@ def plane(data):
     return numpy.reshape(data, (data.shape[0], -1))
 
 
+def stretch(data, to_length, dtype=None):
+    """
+    Stretch 2D array in the first dimension, interpolating values.
+    If <to_length>, change to this length.
+    If <to_length> is a float, new length is <to_length> * old length.
+    """
+
+    length, width = data.shape
+    if type(to_length) == float:
+        to_length = int(to_length * length)
+
+    x = numpy.arange(0, length, (length - 1.) / (to_length - 1.), dtype=dtype)[:to_length]
+    xp = numpy.arange(0, length, dtype=dtype)
+    y = [numpy.interp(x, xp, data[:, i]) for i in range(width)]
+
+    return numpy.array(y, dtype=dtype or data.dtype).T
+
+    
 def argsort(data, reverse=False, last_dim=False, mask=None, order=None):
     """
     Returns indices, a la numpy.where(), which would sort the data array.
@@ -486,6 +504,31 @@ def autocorr(arr):
         results[i - 1] = numpy.corrcoef(arr[:-i], arr[i:])[1, 0]
 
     return results
+
+
+def sincat(arr, lens, func=None):
+    """
+    Reverse concatenation on axis 0, using lengths from <lens>.
+    Sum of <lens> must equal len(<arr>).
+    
+    Returns a list of arrays, of length len(<lens>).
+    Optionally apply function <func>() to each element.
+    """
+
+    assert(len(arr) == numpy.sum(lens))
+    
+    index = 0
+    result = []
+    if func is not None:
+        for length in lens:
+            result.append(func(arr[index:index+length]))
+            index += length
+    else:
+        for length in lens:
+            result.append(arr[index:index+length])
+            index += length
+
+    return result
 
     
 def rolling_window(a, size, offset=1):
