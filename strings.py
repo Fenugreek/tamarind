@@ -77,7 +77,27 @@ def infer_type(arg_str):
         return float
     return int
 
-        
+
+def convert_type(arg_str):
+    """
+    If the string arg_str looks numeric, return value as int or float, else:
+    if 'True' or 'False': return True or False
+    else: return arg_str.
+    """
+
+    try:
+        result = int(arg_str)
+    except:
+        try:
+            result = float(arg_str)
+        except:
+            if arg_str == 'True': return True
+            if arg_str == 'False': return False
+            return arg_str
+
+    return result
+
+    
 def args2dict(arg_strs):
     """
     Given a list of command-line arguments, like
@@ -94,8 +114,8 @@ def args2dict(arg_strs):
     for option in arg_strs or []:
         key, value = option.split('=')
         if ',' in value:
-            kwargs[key] = [infer_type(v)(v) for v in value.split(',')]
+            kwargs[key] = [convert_type(v) for v in value.split(',')]
         else:
-            kwargs[key] = infer_type(value)(value)
+            kwargs[key] = convert_type(value)
 
     return kwargs
