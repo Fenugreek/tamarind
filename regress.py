@@ -532,16 +532,19 @@ def loop_summary(responses, predictors, weights=None, constant=True, names=None,
     """
 
     if type(responses) == tuple:
-        if type(predictors) == tuple:
-            for count, predictor in enumerate(predictors):
-                loop_summary(responses, predictor, weights=weights, constant=constant,
-                             names=names or ['pred'+str(count)],
-                             sliced=sliced, overlay=overlay, select=select,
-                             labels=labels, name=name, formats=formats, **opts)
-            return
-        lpredictors = [predictors for r in responses]
         lresponses = responses
-        name = name or 'resp'
+        if type(predictors) == tuple:
+            lpredictors = predictors
+            name = name or 'index'
+#            for count, predictor in enumerate(predictors):
+#                loop_summary(responses, predictor, weights=weights, constant=constant,
+#                             names=names or ['pred'+str(count)],
+#                             sliced=sliced, overlay=overlay, select=select,
+#                             labels=labels, name=name, formats=formats, **opts)
+#            return
+        else:
+            lpredictors = [predictors for r in responses]
+            name = name or 'resp'
     elif type(predictors) == tuple:
         lresponses = [responses for r in predictors]
         lpredictors = predictors
