@@ -108,7 +108,9 @@ class Logger(object):
                                               self.name, stamp, text)
         
         if self.level_value <= level: self.printer.write(out_str)
-        if self.logfile is not None: self.logfile.write(out_str)
+        if self.logfile is not None:
+            if level or self.store_history_notset:
+                self.logfile.write(out_str)
 
         if (level and self.store_history) or \
            (not level and self.store_history_notset):
