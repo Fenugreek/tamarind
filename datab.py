@@ -364,7 +364,8 @@ class Datab(numpy.ndarray):
         our_dtype = numpy.dtype([tuple(i[:2]) for i in full_spec])
         empty_record = numpy.array([tuple(empty_record)], dtype=our_dtype)
 
-        if type(data) == list: data = numpy.array(data, dtype=our_dtype)
+        if type(data) == list:
+            data = numpy.array(data, dtype=our_dtype)
         elif data is None:
             data = numpy.empty(shape, dtype=our_dtype)
             data.fill(empty_record[0])
