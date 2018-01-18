@@ -100,6 +100,23 @@ def stretch(data, to_length, dtype=None):
 
     return numpy.array(y, dtype=dtype or data.dtype).T
 
+
+def interp(data, index):
+    """
+    Return data[index] where index is allowed to be a float, in which case
+    we linearly interpolate between data[trunc(index)] and data[ceil(index)].
+
+    No checks are made for index being within bounds of data array.
+    """
+
+    if type(index) == int: return data[index]
+    int_index = int(index)
+    if int_index == index: return data[int_index]
+
+    weight = index - int_index
+    return data[int_index] * (1. - weight) + \
+           data[int_index + 1] * weight
+
     
 def argsort(data, reverse=False, last_dim=False, mask=None, order=None):
     """
