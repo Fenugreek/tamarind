@@ -526,7 +526,7 @@ def summary(responses, predictors, weights=None, constant=True,
 
 def loop_summary(responses, predictors, weights=None, constant=True, names=None,
                  sliced=None, select=None, overlay=None,
-                 labels=None, name=None, formats=None, **opts):
+                 labels=None, name=None, formats=None, datab=False, **opts):
     """
     Calls summary() in a loop for multiple responses/predictors.
     """
@@ -563,6 +563,7 @@ def loop_summary(responses, predictors, weights=None, constant=True, names=None,
         count += 1
 
     output = Datab(output, name=name, formats=formats)
+    if datab: return output
     output.output(**opts)
     
 
