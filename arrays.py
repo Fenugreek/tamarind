@@ -118,6 +118,14 @@ def interp(data, index):
            data[int_index + 1] * weight
 
     
+def interps(data, indices):
+    """
+    Wrapper around interp when a list of indices is to be interpolated.
+    Returns an array.
+    """
+    return numpy.array([interp(data, i) for i in indices])
+
+
 def argsort(data, reverse=False, last_dim=False, mask=None, order=None):
     """
     Returns indices, a la numpy.where(), which would sort the data array.
@@ -523,12 +531,14 @@ def autocorr(arr):
     return results
 
 
-def sincat(arr, lens, func=None):
+def sincat(arr, lens, overlay=None, func=None):
     """
     Reverse concatenation on axis 0, using lengths from <lens>.
     Sum of <lens> must equal len(<arr>).
+
+    If overlay is not None, omit sequences i where overlay[i] is False.
+    Returns a list of arrays, of length len(<lens[overlay]>).
     
-    Returns a list of arrays, of length len(<lens>).
     Optionally apply function <func>() to each element.
     """
 
@@ -536,14 +546,13 @@ def sincat(arr, lens, func=None):
     
     index = 0
     result = []
-    if func is not None:
-        for length in lens:
-            result.append(func(arr[index:index+length]))
-            index += length
-    else:
-        for length in lens:
-            result.append(arr[index:index+length])
-            index += length
+    
+    
+    for i, length in enumerate(lens):
+        if overlay is None or overlay[i]:
+            if func is not None: result.append(func(arr[index:index+length]))
+            else: result.append(arr[index:index+length])
+        index += length
 
     return result
 
