@@ -41,7 +41,7 @@ def overlay(x_values, y_values, *args, **kwargs):
     
     
 def multi(data, ylim=None, columns=1, xlim=None, sliced=None,
-          verticals=None, horizontals=None):
+          verticals=None, horizontals=None, line_args=[]):
     """
     Plot multiple graphs in columns no. of columns.
     vertical_lines is a list of x-values that gets passed onto lines().
@@ -51,17 +51,20 @@ def multi(data, ylim=None, columns=1, xlim=None, sliced=None,
     """
     if type(data) == tuple:
         for d in data[:-1]:
-            multi(d, columns=columns, sliced=sliced)
+            multi(d, columns=columns, sliced=sliced, line_args=line_args)
         multi(data[-1], ylim=ylim, columns=columns, sliced=sliced,
-              xlim=xlim, verticals=verticals, horizontals=horizontals)
+              xlim=xlim, line_args=line_args,
+              verticals=verticals, horizontals=horizontals)
         return
 
-    if sliced: data = data[slice(*sliced)]
+    if sliced:
+        if np.isscalar(sliced): sliced = [sliced]
+        data = data[slice(*sliced)]
     rows = numpy.ceil(len(data) / columns)
     for count, records in enumerate(data):
         pyplot.subplot(rows, columns, count+1)
         records = records.squeeze()
-        pyplot.plot(records)
+        pyplot.plot(records, *line_args)
         if ylim is not None: pyplot.ylim(ylim)
         if xlim is not False:
             if xlim is None: pyplot.xlim([0, len(records)])
