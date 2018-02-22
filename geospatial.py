@@ -1,7 +1,7 @@
 """
 Implement some utilities dealing with geography and geometry.
 """
-from __future__ import division
+
 import numpy as np
 
 

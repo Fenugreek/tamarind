@@ -3,13 +3,13 @@ Perform multivariate weighted linear regression, handling nans and returning
 associated statistics.
 """
 
-from __future__ import division
+
 
 import sys
 import numpy, numpy.linalg
-import stats, arrays, strings
-from arrays import nice_array
-import datab as db
+from . import stats, arrays, strings
+from .arrays import nice_array
+from . import datab as db
 
 
 def _format_inputs(responses, predictors, weights=None):

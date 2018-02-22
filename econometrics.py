@@ -1,4 +1,4 @@
-from __future__ import division
+
 """
 Implement some econometrics.
 

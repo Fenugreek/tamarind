@@ -10,9 +10,9 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-import os, sys, re, gzip, cStringIO
+import os, sys, re, gzip, io
 import numpy
-import strings, arrays, logging
+from . import strings, arrays, logging
 
 class Datab(numpy.ndarray):
     """
@@ -124,7 +124,7 @@ class Datab(numpy.ndarray):
             for f in select_fields:
                 if f in field_index: include_fields.append(field_index[f])
         elif skip_fields:
-            for field, count in field_index.items():
+            for field, count in list(field_index.items()):
                 if field not in skip_fields: include_fields.append(count)
         if select_fields or skip_fields:
             if not include_fields: raise AssertionError('No fields in file after applying select/skip fields')
@@ -132,7 +132,7 @@ class Datab(numpy.ndarray):
 
         if match_pattern:
             match_expression = re.compile(match_pattern)
-            lines = filter(match_expression.search, lines)
+            lines = list(filter(match_expression.search, lines))
 
         data = []
         for line in lines:
@@ -183,7 +183,7 @@ class Datab(numpy.ndarray):
             if len(spec_t[1]) and len(spec_t[1]) != len(spec_t[0]):
                 raise AssertionError('File has bad header spec: ' + str(spec_t[1]))
             if len(spec_t[2]) and len(spec_t[2]) != len(spec_t[0]):
-                print spec_t[2]
+                print(spec_t[2])
                 raise AssertionError('File has bad header spec: ' + str(spec_t[2]))
             spec_a = numpy.array(spec_t).transpose()
             spec = [tuple(row) for row in spec_a]
@@ -558,10 +558,10 @@ class Datab(numpy.ndarray):
 
         if stringify:
             assert filename is None and fh is None, 'Too many output options.'
-            fh = cStringIO.StringIO()
+            fh = io.StringIO()
             
         field_format = dict([(field, spec[2]) \
-                             for field, spec in self.field_spec.items()])
+                             for field, spec in list(self.field_spec.items())])
         if fields is None: fields = [s[0] for s in self.spec]
         elif numpy.isscalar(fields): fields = [fields]
 
@@ -571,7 +571,7 @@ class Datab(numpy.ndarray):
                 if skip_field in fields: fields.remove(skip_field)
 
         if print_spec or print_header:
-            print >>fh, self.header(fields=fields, spec=print_spec, rename=rename, delimiter=delimiter)
+            print(self.header(fields=fields, spec=print_spec, rename=rename, delimiter=delimiter), file=fh)
 
         if indices is None: records = self
         else: records = self[indices]        
@@ -597,8 +597,8 @@ class Datab(numpy.ndarray):
             for field in fields:
                 if record[field] == '': record[field] = '#NA'
                 strings.append(field_format[field] % record[field])
-            if line_space and line_count and line_count % line_space == 0: print ''
-            print >>fh, delimiter.join(strings)
+            if line_space and line_count and line_count % line_space == 0: print('')
+            print(delimiter.join(strings), file=fh)
             line_count += 1
 
         if stringify: return fh.getvalue()

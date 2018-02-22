@@ -11,7 +11,7 @@ the Free Software Foundation, either version 3 of the License, or
 
 import numpy
 from matplotlib import pyplot
-import stats
+from . import stats
         
 def overlay(x_values, y_values, *args, **kwargs):
     """
@@ -147,7 +147,7 @@ def summary(values, axis=0, statistic='mean', x_values=None, weights=None,
     s = getattr(stats, cls).stats(values, axis=axis, label_all=None,
                                   weights=weights)
     y_values = s[statistic]
-    if x_values is None: x_values = range(len(y_values))
+    if x_values is None: x_values = list(range(len(y_values)))
     
     if line_args and numpy.isscalar(line_args): line_args = [line_args]
     pyplot.plot(x_values, y_values, *line_args)

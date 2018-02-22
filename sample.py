@@ -2,7 +2,7 @@
 Some utilities for sampling elements from numpy arrays.
 """
 
-from __future__ import division
+
 import numpy
 from numpy.random.mtrand import randint
 
@@ -17,7 +17,7 @@ def sample_draw(count, size):
     elif count < 0: raise AssertionError('count cannot be negative')
     if size < 1: raise AssertionError('size must be > 1')
     
-    deck = range(size)
+    deck = list(range(size))
     for index in range(count):
         current = deck[index]
         swap_index = randint(index, size)

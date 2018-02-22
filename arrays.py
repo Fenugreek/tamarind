@@ -8,8 +8,8 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
-from __future__ import division
-import cPickle
+
+import pickle
 import numpy
 
 
@@ -27,14 +27,14 @@ def load(fromfile, list=True):
     """
 
     handle = fromfile if type(fromfile) == file else open(fromfile, 'rb')
-    arr = cPickle.load(handle)
+    arr = pickle.load(handle)
     if not list:
         handle.close()
         return arr
 
     results = [arr]
     while True:
-        try: results.append(cPickle.load(handle))
+        try: results.append(pickle.load(handle))
         except EOFError: break
 
     handle.close()
@@ -56,7 +56,7 @@ def save(arrs, tofile):
     if type(arrs) != list: arrs = [arrs]
 
     handle = open(tofile, 'wb') if type(tofile) == str else tofile
-    for arr in arrs: cPickle.dump(arr, handle)
+    for arr in arrs: pickle.dump(arr, handle)
     if type(tofile) == str: handle.close()
 
 
@@ -242,7 +242,7 @@ def rank(data, axis=None, reverse=False, mask=None):
         # initialize ranks to -1, value to return for NaNs
         indices_rank = numpy.zeros(numpy.shape(data), dtype=int) - 1
         sort_indices = argsort(data, reverse=reverse, mask=mask)
-        indices_rank[sort_indices] = numpy.array(range(numpy.shape(sort_indices)[-1]))
+        indices_rank[sort_indices] = numpy.array(list(range(numpy.shape(sort_indices)[-1])))
         return indices_rank
 
     if not isinstance(data, numpy.ndarray): data = numpy.array(data)    
@@ -462,10 +462,10 @@ def dict_array(records, key, field=None):
         else: output[identifier].append(count)
         
     if field is None:
-        for identifier in output.keys():
+        for identifier in list(output.keys()):
             output[identifier] = records[output[identifier]]
     else:
-        for identifier in output.keys():
+        for identifier in list(output.keys()):
             output[identifier] = records[output[identifier]][field]
 
     return output
@@ -531,7 +531,7 @@ def autocorr(arr):
     return results
 
 
-def sincat(arr, lens, overlay=None, func=None):
+def sincat(arr, lens, func=None, overlay=None):
     """
     Reverse concatenation on axis 0, using lengths from <lens>.
     Sum of <lens> must equal len(<arr>).
@@ -591,9 +591,9 @@ def rolling_window(a, size, offset=1):
 
     length = a.shape[-1]
     if size < 1:
-        raise ValueError, "`size` must be at least 1."
+        raise ValueError("`size` must be at least 1.")
     if size > length:
-        raise ValueError, "`size` is too long."
+        raise ValueError("`size` is too long.")
 
     # remainder is the last few elements of array a that are left out
     # because (offset, size) combination doesn't fit length of a.

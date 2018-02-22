@@ -27,7 +27,7 @@ def fields_test(dictionary, conditions):
 
     count = 0
     net = 0
-    for key, cond_value in conditions.items():
+    for key, cond_value in list(conditions.items()):
         count += 1
         cond, value = cond_value
         field_value = dictionary[key]

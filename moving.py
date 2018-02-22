@@ -9,12 +9,12 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-from __future__ import division
+
 
 import sys
 import numpy
 from matplotlib import pyplot
-import stats, arrays
+from . import stats, arrays
 
 
 def _get_size_offset(data, size, overlap, fit_edges=True):

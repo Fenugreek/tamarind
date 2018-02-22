@@ -5,7 +5,7 @@ Track valid dates, number of days between them, etc.
 import re
 import datetime, time
 import numpy
-import logging
+from . import logging
 
 
 def today():

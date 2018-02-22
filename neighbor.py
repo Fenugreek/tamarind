@@ -1,9 +1,9 @@
 """
 Implement some nearest neighbors statistics.
 """
-from __future__ import division
+
 import numpy as np
-import stats as T_stats
+from . import stats as T_stats
 
 def reciprocal_weights(distances, scale=1, power=1):
     """

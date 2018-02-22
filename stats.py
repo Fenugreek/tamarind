@@ -10,11 +10,11 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-from __future__ import division
+
 import sys
 import numpy
-import datab as db
-import arrays, logging, strings
+from . import datab as db
+from . import arrays, logging, strings
 
 
 class Sparse(object):
@@ -149,7 +149,7 @@ class Sparse(object):
         fvalues = values.flatten()
         fvalues.mask = fweights.mask
 
-        if IDs is None: IDs = numpy.array(range(fvalues.size), dtype=int) + self.size
+        if IDs is None: IDs = numpy.array(list(range(fvalues.size)), dtype=int) + self.size
         elif not isinstance(IDs, numpy.ndarray): IDs = numpy.array(IDs)
 
         self.size += fvalues.size
@@ -468,8 +468,8 @@ class Full(Sparse):
 
         indices = numpy.ma.argsort(valid_values)
         update_data = \
-            numpy.array(zip(valid_values[indices], weights[~mask][indices],
-                            IDs[~mask][indices]),
+            numpy.array(list(zip(valid_values[indices], weights[~mask][indices],
+                            IDs[~mask][indices])),
                         dtype=numpy.dtype([('value', values[0].dtype),
                                            ('weight', weights[0].dtype),
                                            ('ID', IDs[0].dtype)]))
@@ -772,12 +772,12 @@ class Multivariate(Sparse):
             if stat in Datab.spec_index: format = Datab.spec[Datab.spec_index[stat]][2]
             else: format = '%9.4f'
 
-        print ' '.join([strings.fmt(string, format) for string in [' '] + names])
+        print(' '.join([strings.fmt(string, format) for string in [' '] + names]))
         for i in range(self.nvars):
-            print strings.fmt(names[i], format),
+            print(strings.fmt(names[i], format), end=' ')
             for j in range(self.nvars):
-                print format % values[i, j],
-            print ''
+                print(format % values[i, j], end=' ')
+            print('')
 
         
     def datab_ij(self, statistic, names=None, format=None):
@@ -854,7 +854,7 @@ class Datab(db.Datab):
         else: labels = [str(l) for l in labels]
         
         indices = []
-        for stat in first_result.keys():
+        for stat in list(first_result.keys()):
             if stat not in Datab.spec_index: continue
             indices.append(Datab.spec_index[stat])
         statistics = numpy.array(Datab.spec)[numpy.sort(indices)]
