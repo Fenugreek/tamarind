@@ -9,7 +9,7 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-import pickle
+import io, pickle
 import numpy
 
 
@@ -25,8 +25,8 @@ def load(fromfile, list=True):
     If True, multiple arrays are returned, as a list;
     as many as were saved to the file.
     """
-
-    handle = fromfile if type(fromfile) == file else open(fromfile, 'rb')
+                         
+    handle = fromfile if isinstance(fromfile, io.IOBase) else open(fromfile, 'rb')
     arr = pickle.load(handle)
     if not list:
         handle.close()

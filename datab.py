@@ -560,10 +560,10 @@ class Datab(numpy.ndarray):
             assert filename is None and fh is None, 'Too many output options.'
             fh = io.StringIO()
             
-        field_format = dict([(field, spec[2]) \
-                             for field, spec in list(self.field_spec.items())])
         if fields is None: fields = [s[0] for s in self.spec]
         elif numpy.isscalar(fields): fields = [fields]
+        field_formats = [self.field_spec[f][2] for f in fields]
+        field_is_str = [self.field_spec[f][2][-1] == 's' for f in fields]
 
         if exclude is not None:
             if numpy.isscalar(exclude): exclude = [exclude]
@@ -594,9 +594,12 @@ class Datab(numpy.ndarray):
                 uniques[record[unique]] = True
                 
             strings = []
-            for field in fields:
-                if record[field] == '': record[field] = '#NA'
-                strings.append(field_format[field] % record[field])
+            for field, fmt, is_str in zip(fields, field_formats, field_is_str):
+                value = record[field]
+                if is_str:
+                    if value == '': value = '#NA'
+                    else: value = value.decode()
+                strings.append(fmt % value)
             if line_space and line_count and line_count % line_space == 0: print('')
             print(delimiter.join(strings), file=fh)
             line_count += 1
@@ -647,5 +650,8 @@ class Datab(numpy.ndarray):
         
         strings = []
         for field in fields:
-            strings.append(self.field_spec[field][2] % record[field])
+            field_spec = self.field_spec[field]
+            value = record[field]
+            if field_spec[1][0] == 'S': value = value.decode()
+            strings.append(field_spec[2] % value)
         return ' '.join(strings)
