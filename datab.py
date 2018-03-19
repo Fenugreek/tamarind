@@ -97,7 +97,7 @@ class Datab(numpy.ndarray):
             if not os.path.isfile(filename):
                 if os.path.isfile(filename + '.gz'): filename += '.gz'
                 else:
-                    logger.info('Returning None because file does not exist: %s', filename)
+                    logger.warning('Returning None because file does not exist: %s', filename)
                     return None, None
             if filename[-3:] == '.gz': stream = gzip.open(filename)
             else: stream = open(filename)
