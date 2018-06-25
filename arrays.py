@@ -13,7 +13,7 @@ import io, pickle
 import numpy
 
 
-def load(fromfile, list=True):
+def load(fromfile, list=True, **kwargs):
     """
     Load from file where array(s) was previously cPickle'd.
 
@@ -24,17 +24,20 @@ def load(fromfile, list=True):
     list:
     If True, multiple arrays are returned, as a list;
     as many as were saved to the file.
+
+    kwargs:
+    pass these to pickle.load(). Useful for backward compatibility (python2).
     """
                          
     handle = fromfile if isinstance(fromfile, io.IOBase) else open(fromfile, 'rb')
-    arr = pickle.load(handle)
+    arr = pickle.load(handle, **kwargs)
     if not list:
         handle.close()
         return arr
 
     results = [arr]
     while True:
-        try: results.append(pickle.load(handle))
+        try: results.append(pickle.load(handle, **kwargs))
         except EOFError: break
 
     handle.close()
@@ -531,7 +534,7 @@ def autocorr(arr):
     return results
 
 
-def sincat(arr, lens, func=None, overlay=None):
+def sincat(arr, lens, func=None, overlay=None, reverse=False):
     """
     Reverse concatenation on axis 0, using lengths from <lens>.
     Sum of <lens> must equal len(<arr>).
@@ -540,6 +543,8 @@ def sincat(arr, lens, func=None, overlay=None):
     Returns a list of arrays, of length len(<lens[overlay]>).
     
     Optionally apply function <func>() to each element.
+
+    If reverse is True, sequences are reversed and returned.
     """
 
     assert(len(arr) == numpy.sum(lens))
@@ -550,8 +555,10 @@ def sincat(arr, lens, func=None, overlay=None):
     
     for i, length in enumerate(lens):
         if overlay is None or overlay[i]:
-            if func is not None: result.append(func(arr[index:index+length]))
-            else: result.append(arr[index:index+length])
+            iarr = arr[index:index+length]
+            if reverse: iarr = iarr[::-1].copy()
+            if func is not None: result.append(func(iarr))
+            else: result.append(iarr)
         index += length
 
     return result
