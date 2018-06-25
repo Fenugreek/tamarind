@@ -274,6 +274,8 @@ class Sparse(object):
                 raise AssertionError('group, buckets and split options not supported together.')
             label_other = None
             labels, buckets = [], []
+            if type(group) == list or type(group) == tuple:
+                group = numpy.array(group)
             for group_name in numpy.unique(group):
                 labels.append(group_name)
                 buckets.append(group == group_name)
