@@ -58,7 +58,7 @@ def multi(data, ylim=None, columns=1, xlim=None, sliced=None,
         return
 
     if sliced:
-        if np.isscalar(sliced): sliced = [sliced]
+        if numpy.isscalar(sliced): sliced = [sliced]
         data = data[slice(*sliced)]
     rows = numpy.ceil(len(data) / columns)
     for count, records in enumerate(data):
