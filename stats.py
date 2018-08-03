@@ -138,6 +138,7 @@ class Sparse(object):
             mask |= weights.mask
             # Following contortion to avoid bogus
             #    "RuntimeWarning: Invalid value encountered in less_equal"
+            if mask.size < 2 and (not mask): mask = weights <= 0
             mask[~mask] = (weights[~mask] <= 0)
             fweights = weights.flatten()
         else:
@@ -417,6 +418,8 @@ class Sparse(object):
 
         if type(data) != tuple:
             raise ValueError('Data needs to be tuple so looping can happen.')
+        if 'datab' in opts: datab = opts.pop('datab')
+        else: datab = None
 
         output = []
         all_labels = []
@@ -426,7 +429,9 @@ class Sparse(object):
             if labels is not None and len(labels): all_labels.append(labels[count])
             else: all_labels.append(count)
 
+        if datab is False: return output
         output = Datab(output, labels=all_labels, name=name, formats=formats)
+        if datab is True: return output
         return output.output(include=include, exclude=exclude, fields=fields, all=all,
                              stringify=stringify)
         
