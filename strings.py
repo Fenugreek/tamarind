@@ -62,6 +62,30 @@ def fmt_matrix(mat, format, labels=None):
     return result
 
 
+def fmt_list(vals, fmt, separator=' '):
+    """
+    Return a string that represents a separator joined format prints of list items.
+
+    vals:     input list
+    fmt:   format string to use for each element of list.
+    separtor: place in between formatted strings.
+    """
+
+    if fmt[0] != '{':
+        if fmt[0] != ':': fmt = ':' + fmt
+        fmt = '{' + fmt + '}'
+        
+    if len(vals) == 0: return ''
+    result = fmt.format(vals[0])
+    if len(vals) == 1: return result
+
+    for v in vals[1:]:
+        result += separator
+        result += fmt.format(v)
+        
+    return result
+
+
 def infer_type(arg_str):
     """
     If the string arg_str looks numeric, return int or float, else return str.
