@@ -66,9 +66,9 @@ def fmt_list(vals, fmt, separator=' '):
     """
     Return a string that represents a separator joined format prints of list items.
 
-    vals:     input list
-    fmt:   format string to use for each element of list.
-    separtor: place in between formatted strings.
+    vals:      input list
+    fmt:       format string to use for each element of list.
+    separator: place in between formatted strings.
     """
 
     if fmt[0] != '{':
