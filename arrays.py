@@ -44,7 +44,7 @@ def load(fromfile, list=True, **kwargs):
     return results
 
 
-def save(arrs, tofile):
+def save(arrs, tofile, select=None):
     """
     Save array(s) to file using cPickle.
 
@@ -53,13 +53,18 @@ def save(arrs, tofile):
 
     tofile:
     filename or file handle.
-    If file handle, file handle is not closed after array(s) are saved.    
+    If file handle, file handle is not closed after array(s) are saved.
+
+    select:
+    Boolean values of same length as arrs; save to disk arrs[i] where select[i] == True.
     """
 
     if type(arrs) != list: arrs = [arrs]
 
     handle = open(tofile, 'wb') if type(tofile) == str else tofile
-    for arr in arrs: pickle.dump(arr, handle)
+    for i, arr in enumerate(arrs):
+        if select is not None and not select[i]: continue
+        pickle.dump(arr, handle)
     if type(tofile) == str: handle.close()
 
 
