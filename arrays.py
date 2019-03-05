@@ -10,10 +10,12 @@ the Free Software Foundation, either version 3 of the License, or
 """
 
 import io, pickle
+from collections import defaultdict                                                      
+
 import numpy
 
 
-def load(fromfile, list=True, **kwargs):
+def load(fromfile, list=True, select=None, **kwargs):
     """
     Load from file where array(s) was previously cPickle'd.
 
@@ -25,6 +27,9 @@ def load(fromfile, list=True, **kwargs):
     If True, multiple arrays are returned, as a list;
     as many as were saved to the file.
 
+    select:
+    Boolean values of same length as arrs; load from disk arrs[i] where select[i] == True.
+    
     kwargs:
     pass these to pickle.load(). Useful for backward compatibility (python2).
     """
@@ -35,11 +40,18 @@ def load(fromfile, list=True, **kwargs):
         handle.close()
         return arr
 
-    results = [arr]
+    if select is None: results = [arr]
+    elif select[0]: results = [arr]
+    else: results = []
+    i = 0
     while True:
-        try: results.append(pickle.load(handle, **kwargs))
+        try: arr = pickle.load(handle, **kwargs)
         except EOFError: break
-
+        if select is not None:
+            i += 1
+            if not select[i]: continue
+        results.append(arr)
+        
     handle.close()
     return results
 
@@ -565,6 +577,29 @@ def sincat(arr, lens, func=None, overlay=None, reverse=False):
             if func is not None: result.append(func(iarr))
             else: result.append(iarr)
         index += length
+
+    return result
+
+
+def index_labels(labels, sort=True, dtype=numpy.int64):
+    """
+    Convert strings to indices, one for each unique string.
+
+    sort:
+    if True, index values follow sort order of unique strings.
+    """
+
+    locations = defaultdict(list)
+    for i, l in enumerate(labels): locations[l].append(i)
+
+    keys = list(locations.keys())
+    if sort: keys = numpy.sort(keys)
+    index = dict((k, i) for i, k in enumerate(keys))
+
+    result = numpy.empty(len(labels), dtype=dtype)
+    for key, locs in locations.items():
+        idx = index[key]
+        for l in locs: result[l] = idx
 
     return result
 
