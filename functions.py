@@ -100,14 +100,26 @@ def logit(data, eps=1e-8):
     return -np.log(1 / (data + eps) - 1 + eps)
 
 
-def elu(data, copy=True):
+def elu(data, alpha=1.0, copy=True):
     """Exponential LU activation function."""
 
     if copy: result = data.copy()
     else: result = data
     
     mask = data < 0
-    result[mask] = np.exp(data[mask]) - 1.0
+    result[mask] = alpha * (np.exp(data[mask]) - 1.0)
+
+    return result
+
+
+def celu(data, alpha, copy=True):
+    """Continuously differentiable exponential LU activation function."""
+
+    if copy: result = data.copy()
+    else: result = data
+    
+    mask = data < 0
+    result[mask] = alpha * (np.exp(data[mask] / alpha) - 1.0)
 
     return result
 
