@@ -10,6 +10,7 @@ the Free Software Foundation, either version 3 of the License, or
 """
 
 import re
+import numpy
 
 format_expression = re.compile('%([+-]*)(\d+)\.*\d*\w')
 
@@ -74,7 +75,8 @@ def fmt_list(vals, fmt, separator=' '):
     if fmt[0] != '{':
         if fmt[0] != ':': fmt = ':' + fmt
         fmt = '{' + fmt + '}'
-        
+
+    if numpy.isscalar(vals): vals = [vals]
     if len(vals) == 0: return ''
     result = fmt.format(vals[0])
     if len(vals) == 1: return result
