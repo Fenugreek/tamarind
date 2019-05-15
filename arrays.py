@@ -106,7 +106,7 @@ def plane(data):
 def stretch(data, to_length, dtype=None):
     """
     Stretch 2D array in the first dimension, interpolating values.
-    If <to_length>, change to this length.
+    If <to_length> is not a float, change to this length.
     If <to_length> is a float, new length is <to_length> * old length.
     """
 
@@ -308,6 +308,17 @@ def percentile_rank(data, weights=None, axis=None, reverse=False, mask=None):
     return percentiles.swapaxes(-1, axis)
 
 
+def ints2bins(values, minwidth=0, minlength=0):
+    """
+    Convert 1D array of positive integers to 2D array of booleans.
+    """
+
+    result = numpy.zeros((max(len(values), minlength),
+                          max(numpy.max(values) + 1, minwidth)), dtype=bool)
+    for i, v in enumerate(values): result[i, v] = True
+    return result
+
+    
 def nice_array(values, shape=None, logger=None, copy=False):
     """
     Utility function to convert input data to a nice ma.array with appropriate shape
