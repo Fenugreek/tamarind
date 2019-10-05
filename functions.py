@@ -83,9 +83,10 @@ def unit_scale(data, signed=False, axis=None):
 
 
 def softmax(data, axis=None):
-    """Scale data to unit interval using softmax function."""
-    
-    return unit_scale(np.exp(data), axis=axis)
+    """Scale exp(data) to sum to unit along axis."""
+
+    edata = np.exp(data)
+    return edata / np.sum(edata, axis=axis)[:, None].swapaxes(-1, axis)
 
 
 def sigmoid(data):
