@@ -46,7 +46,7 @@ def toward_zero(data, value):
     return results
 
 
-def per_cap(data, caps):
+def per_clip(data, caps):
     """
     Return values in data clipped between %le values of (caps[0], caps[1]).
     If caps is a scalar, only large values are capped.
@@ -59,27 +59,33 @@ def per_cap(data, caps):
     return np.clip(data, low, high)
 
 
-def unit_scale(data, signed=False, axis=None):
+def scale2unit(data, eps=.1, dtype=None, soft_clip=99.99):
     """
-    Scales all values in the ndarray data to be between
-     0 and 1 if signed is False,
-    -1 and 1 if signed is True.
+    Scale values to between -1.0 and +1.0 strictly, and less strictly between
+    -1.0 + <eps> or 1.0 - <eps>.
+    
+    More precisely, amplitude is scaled such that <large_value> is set to
+    -1.0 + <eps> or 1.0 - <eps>, where <large_value> is
+        if soft_clip is None:
+            the max value of abs(data)
+        else:
+            soft_clip %le value of abs(data)
 
-    Adapted from deeplearning.net's utils.scale_to_unit().
+    Result is returned as type <dtype>, which defaults to
+        if data.dtype is an integer type: float32
+        else: data.dtype
     """
-    
-    result = data.copy()
-    if axis: result = result.swapaxes(0, axis)
-    
-    result -= data.min(axis=axis)
-    max_val = result.max(axis=0 if axis else axis)
-    if signed:
-        result /= max_val / 2.
-        result -= 1.0
-    else:
-        result /= max_val
-    
-    return result.swapaxes(0, axis) if axis else result
+
+    if dtype is None:
+        dtype = data.dtype
+        if 'int' in str(dtype): dtype = np.float32
+            
+    data = data / (np.percentile(abs(data), soft_clip) if soft_clip
+                   else np.max(abs(data)))
+    if eps: data *= 1. - eps
+    if soft_clip: data = np.clip(data, -1.0, 1.0)
+
+    return data.astype(dtype, copy=False)
 
 
 def softmax(data, axis=None):
