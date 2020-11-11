@@ -60,18 +60,21 @@ def multi(data, ylim=None, columns=1, xlim=None, sliced=None,
     if sliced:
         if numpy.isscalar(sliced): sliced = [sliced]
         data = data[slice(*sliced)]
-    rows = numpy.ceil(len(data) / columns)
+        
+    rows = int(numpy.ceil(len(data) / columns))
+    fig, axs = pyplot.subplots(rows, columns)
+    axs = axs.flatten()
+    
     for count, records in enumerate(data):
-        pyplot.subplot(rows, columns, count+1)
+        ax = axs[count]
         records = records.squeeze()
-        pyplot.plot(records, *line_args)
-        if ylim is not None: pyplot.ylim(ylim)
+        ax.plot(records, *line_args)
+        if ylim is not None: ax.set_ylim(ylim)
         if xlim is not False:
-            if xlim is None: pyplot.xlim([0, len(records)])
-            else: pyplot.xlim(xlim)
+            ax.set_xlim(xlim or [0, len(records)])
             
-        if verticals is not None: lines(verticals)
-        if horizontals is not None: lines(horizontals, axis=0)
+        if verticals is not None: lines(verticals, ax=ax)
+        if horizontals is not None: lines(horizontals, axis=0, ax=ax)
 
 
 def twin(data, colors=['Blue', 'Red'], ylabels=['y1', 'y2'], xlabel='x',
@@ -101,7 +104,7 @@ def twin(data, colors=['Blue', 'Red'], ylabels=['y1', 'y2'], xlabel='x',
     return axes
 
 
-def lines(values, axis=1, line_args='k'):
+def lines(values, axis=1, line_args='k', ax=pyplot):
     """
     Plot straight lines at each axis value, in black.
     """
@@ -109,11 +112,11 @@ def lines(values, axis=1, line_args='k'):
     if numpy.isscalar(values): values = [values]
     if numpy.isscalar(line_args): line_args = [line_args]
     
-    ranges = pyplot.axis()
+    ranges = ax.axis()
     for val in values:
-        if axis: pyplot.plot([val, val], ranges[2:], *line_args)
-        else: pyplot.plot(ranges[:2], [val, val], *line_args)
-    pyplot.axis(ranges)
+        if axis: ax.plot([val, val], ranges[2:], *line_args)
+        else: ax.plot(ranges[:2], [val, val], *line_args)
+    ax.axis(ranges)
 
 
 def summary(values, axis=0, statistic='mean', x_values=None, weights=None,
