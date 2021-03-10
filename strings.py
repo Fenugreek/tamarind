@@ -136,6 +136,9 @@ def args2dict(arg_strs):
     If commas present after the '=' delimiter, value is a list.
     """
     
+    if type(arg_strs) == str:
+        arg_strs = [arg_strs]
+
     kwargs = {}
     for option in arg_strs or []:
         key, value = option.split('=')
@@ -153,6 +156,9 @@ def args2listdict(arg_strs):
     So a tuple is returned -- a list plus a dict.
     See doc string for args2dict.
     """
+
+    if type(arg_strs) == str:
+        arg_strs = [arg_strs]
 
     args, kwargs = [], []
     for option in arg_strs or []:
