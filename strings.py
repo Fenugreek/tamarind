@@ -129,7 +129,7 @@ def args2dict(arg_strs):
     Given a list of command-line arguments, like
         ['level=INFO', 'layers=2', 'rate=0.5'],
     return dict like
-        {'level': 'INFO', 'layers':2, 'rate':.5}
+        {'level': 'INFO', 'layers': 2, 'rate': .5}
     with appropriate type conversions for the values inferred
     (in above example, retain as string, convert to int, convert to float).
 
@@ -145,3 +145,23 @@ def args2dict(arg_strs):
             kwargs[key] = convert_type(value)
 
     return kwargs
+
+
+def args2listdict(arg_strs):
+    """
+    Allow for arguments that do not have '=', returning them as a list.
+    So a tuple is returned -- a list plus a dict.
+    See doc string for args2dict.
+    """
+
+    args, kwargs = [], []
+    for option in arg_strs or []:
+        if '=' in option:
+            kwargs.append(option)
+            continue
+        if ',' in option:
+            args.append(convert_type(v) for v in option.split(','))
+        else:
+            args.append(convert_type(option))
+
+    return args, args2dict(kwargs)
