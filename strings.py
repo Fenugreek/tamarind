@@ -124,7 +124,7 @@ def convert_type(arg_str):
     return result
 
     
-def args2dict(arg_strs):
+def args2dict(arg_strs, **kwargs):
     """
     Given a list of command-line arguments, like
         ['level=INFO', 'layers=2', 'rate=0.5'],
@@ -134,12 +134,13 @@ def args2dict(arg_strs):
     (in above example, retain as string, convert to int, convert to float).
 
     If commas present after the '=' delimiter, value is a list.
+
+    kwargs supplied are returned by default.
     """
     
     if type(arg_strs) == str:
         arg_strs = [arg_strs]
 
-    kwargs = {}
     for option in arg_strs or []:
         key, value = option.split('=')
         if ',' in value:
@@ -150,24 +151,26 @@ def args2dict(arg_strs):
     return kwargs
 
 
-def args2listdict(arg_strs):
+def args2listdict(arg_strs, **kwargs):
     """
     Allow for arguments that do not have '=', returning them as a list.
     So a tuple is returned -- a list plus a dict.
     See doc string for args2dict.
+
+    kwargs supplied are returned by default.    
     """
 
     if type(arg_strs) == str:
         arg_strs = [arg_strs]
 
-    args, kwargs = [], []
+    args, kwargs_list = [], []
     for option in arg_strs or []:
         if '=' in option:
-            kwargs.append(option)
+            kwargs_list.append(option)
             continue
         if ',' in option:
             args.append(convert_type(v) for v in option.split(','))
         else:
             args.append(convert_type(option))
 
-    return args, args2dict(kwargs)
+    return args, args2dict(kwargs_list, **kwargs)
