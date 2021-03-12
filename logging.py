@@ -48,6 +48,9 @@ class Logger(object):
 
     obj.critical_exit:
     do sys.exit(msg) rather than return(msg) when self.critical(msg) is called.
+
+    obj.status_line:
+    Whether previous printed line was done with a call using status_line=True.
     """
 
     level_value = {'critical': 50,
@@ -92,6 +95,7 @@ class Logger(object):
         self.printer = printer
         self.store_history_notset = store_notset
         self.critical_exit = critical_exit
+        self.status_line = False
 
     def setLevel(self, level):
         if level not in Logger.level_value:
@@ -101,13 +105,18 @@ class Logger(object):
         self.level_value = Logger.level_value[level]
 
 
-    def _handle(self, level, text):
+    def _handle(self, level, text, status_line=False):
+        '''If status=True, print on same line, overwriting previous status output.'''
 
         stamp = timestamp()
-        out_str = '[{:<5} {} {}] {}\n'.format(Logger.level_str[level],
-                                              self.name, stamp, text)
+        out_str = '[{:<5} {} {}] {}'.format(Logger.level_str[level],
+                                            self.name, stamp, text)
         
-        if self.level_value <= level: self.printer.write(out_str)
+        if self.level_value <= level:
+            if self.status_line:
+                print('\r' if status_line else '\n')
+            self.status_line = status_line
+            self.printer.write(out_str + '' if status_line else '\n')
         if self.logfile is not None:
             if level or self.store_history_notset:
                 self.logfile.write(out_str)
@@ -119,25 +128,25 @@ class Logger(object):
         return self.history[-1]
     
 
-    def debug(self, text, *args):
-        return self._handle(Logger.level_value['debug'], text.format(*args))
+    def debug(self, text, *args, **kwargs):
+        return self._handle(Logger.level_value['debug'], text.format(*args), **kwargs)
 
-    def info(self, text, *args):
-        return self._handle(Logger.level_value['info'], text.format(*args))
+    def info(self, text, *args, **kwargs):
+        return self._handle(Logger.level_value['info'], text.format(*args), **kwargs)
 
-    def warning(self, text, *args):
-        return self._handle(Logger.level_value['warning'], text.format(*args))
+    def warning(self, text, *args, **kwargs):
+        return self._handle(Logger.level_value['warning'], text.format(*args), **kwargs)
 
-    def error(self, text, *args):
-        return self._handle(Logger.level_value['error'], text.format(*args))
+    def error(self, text, *args, **kwargs):
+        return self._handle(Logger.level_value['error'], text.format(*args), **kwargs)
 
-    def critical(self, text, *args):
-        result = self._handle(Logger.level_value['critical'], text.format(*args))
+    def critical(self, text, *args, **kwargs):
+        result = self._handle(Logger.level_value['critical'], text.format(*args), **kwargs)
         if self.critical_exit:
             sys.exit('[{:<5} {} {}] Exiting...'.format(Logger.level_str[result[1]],
                                                        self.name, result[0]))
         else: return result
 
-    def notset(self, text, *args):
-        return self._handle(Logger.level_value['notset'], text.format(*args))
+    def notset(self, text, *args, **kwargs):
+        return self._handle(Logger.level_value['notset'], text.format(*args), **kwargs)
 
