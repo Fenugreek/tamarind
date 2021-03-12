@@ -965,7 +965,8 @@ class Datab(db.Datab):
                 fields = numpy.insert(fields, insert_indices, include)
 
         for field in fields:
-            if exclude is None or field not in exclude: kwargs['fields'].append(field)
+            if exclude is None or field not in exclude:
+                kwargs['fields'].append(field)
 
         return super(Datab, self).output(**kwargs)
         
