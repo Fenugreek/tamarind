@@ -120,15 +120,18 @@ class Logger(object):
                                             self.name, stamp, text)
         
         if self.level_value <= level:
+            pad = '' if status_line else '\n'
             if self.previous and self.previous[-1]:
                 if status_line:
                     # Erase the previous line.
-                    self.printer.write('\r' + ' '*len(self.previous[-2]) + '\r')
+                    self.printer.write('\r')
+                    if (diff := len(self.previous[-2]) - len(out_str)) > 0:
+                        pad = ' ' * diff
                 else:
                     # Step to next line.
                     # (Preserve previous line's output onscreen.)
                     self.printer.write('\n')
-            self.printer.write(out_str + ('' if status_line else '\n'))
+            self.printer.write(out_str + pad)
 
         self.previous = [stamp, level, text, out_str, status_line]
         if store is not False:
