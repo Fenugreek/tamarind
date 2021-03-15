@@ -42,15 +42,12 @@ class Logger(object):
     obj.level:
     What level of messgages to make visible (print).
 
-    obj.store_history, obj.history:
-    whether to store all calls made to this object and the text associated with them, in
-    obj.history. If False, only the most recent call is stored.
+    obj.store_history, obj.history, obj.previous:
+    whether to store calls made to this object and the text associated with them,
+    in obj.history. If False, only the most recent call is stored, in obj.previous.
 
     obj.critical_exit:
     do sys.exit(msg) rather than return(msg) when self.critical(msg) is called.
-
-    obj.status_line:
-    Whether previous printed line was done with a call using status_line=True.
     """
 
     level_value = {'critical': 50,
@@ -78,7 +75,7 @@ class Logger(object):
 
         store:
         store all calls made to this object and the text associated with them, in
-        obj.history. If False, only the most recent call is stored.
+        obj.history. If False, only the most recent call is stored, in obj.previous.
 
         logfile:
         write all messages to this filehandle, in addition to stderr.
@@ -90,12 +87,13 @@ class Logger(object):
         self.name = name
         self.setLevel(level)
         self.history = []
+        self.previous = None
         self.store_history = store
         self.logfile = logfile
         self.printer = printer
         self.store_history_notset = store_notset
         self.critical_exit = critical_exit
-        self.status_line = False
+
 
     def setLevel(self, level):
         if level not in Logger.level_value:
@@ -105,27 +103,41 @@ class Logger(object):
         self.level_value = Logger.level_value[level]
 
 
-    def _handle(self, level, text, status_line=False):
-        '''If status=True, print on same line, overwriting previous status output.'''
+    def _handle(self, level, text, status_line=False, store=None):
+        """
+        status_line:
+        If True, print on same line, overwriting previous status output.
+        
+        store:
+        By default, text is stored in self.history (if self.store_history+True)
+        and printed to self.logfile (if self.logfile is not None) unless
+        status_line=True, or level is 0 and store_history_notset is False.
+        Specify store=True (False) for a definitive store (or not).
+        """
 
         stamp = timestamp()
         out_str = '[{:<5} {} {}] {}'.format(Logger.level_str[level],
                                             self.name, stamp, text)
         
         if self.level_value <= level:
-            if self.status_line:
-                print('\r' if status_line else '\n')
-            self.status_line = status_line
-            self.printer.write(out_str + '' if status_line else '\n')
-        if self.logfile is not None:
-            if level or self.store_history_notset:
-                self.logfile.write(out_str)
+            if self.previous and self.previous[-1]:
+                if status_line:
+                    # Erase the previous line.
+                    self.printer.write('\r' + ' '*len(self.previous[-2]) + '\r')
+                else:
+                    # Step to next line.
+                    # (Preserve previous line's output onscreen.)
+                    self.printer.write('\n')
+            self.printer.write(out_str + ('' if status_line else '\n'))
 
-        if (level and self.store_history) or \
-           (not level and self.store_history_notset):
-            self.history.append([stamp, level, text])
-        else: self.history = [[stamp, level, text]]
-        return self.history[-1]
+        self.previous = [stamp, level, text, out_str, status_line]
+        if store is not False:
+            if store is True or level or self.store_history_notset:
+                if self.logfile is not None:
+                    self.logfile.write(out_str + '\n')
+                if self.store_history:
+                    self.history.append([stamp, level, text])
+        return self.previous
     
 
     def debug(self, text, *args, **kwargs):
