@@ -107,7 +107,7 @@ def infer_type(arg_str):
 def convert_type(arg_str):
     """
     If the string arg_str looks numeric, return value as int or float, else:
-    if 'True' or 'False': return True or False
+    if 'True' or 'False' or 'None': return True or False or None.
     else: return arg_str.
     """
 
@@ -119,6 +119,7 @@ def convert_type(arg_str):
         except:
             if arg_str == 'True': return True
             if arg_str == 'False': return False
+            if arg_str == 'None': return None
             return arg_str
 
     return result
