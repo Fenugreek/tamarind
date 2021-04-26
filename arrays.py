@@ -15,7 +15,7 @@ from collections import defaultdict
 import numpy
 
 
-def load(fromfile, list=True, select=None, **kwargs):
+def load(fromfile, list=True, select=None, start=0, end=None, **kwargs):
     """
     Load from file where array(s) was previously cPickle'd.
 
@@ -23,15 +23,21 @@ def load(fromfile, list=True, select=None, **kwargs):
     filename or file handle.
     If file handle, file handle is closed before results are returned.
     
+    kwargs:
+    pass these to pickle.load(). Useful for backward compatibility (python2).
+
     list:
     If True, multiple arrays are returned, as a list;
     as many as were saved to the file.
 
+    The following apply only if list is True.
+    
     select:
     Boolean values of same length as arrs; load from disk arrs[i] where select[i] == True.
-    
-    kwargs:
-    pass these to pickle.load(). Useful for backward compatibility (python2).
+
+    start, end:
+    Load arrays after skipping the first <start> arrays, and until <end> arrays read.
+    If select is also specified, it is applied offset from <start>.    
     """
                          
     handle = fromfile if isinstance(fromfile, io.IOBase) else open(fromfile, 'rb')
@@ -40,16 +46,26 @@ def load(fromfile, list=True, select=None, **kwargs):
         handle.close()
         return arr
 
-    if select is None: results = [arr]
-    elif select[0]: results = [arr]
-    else: results = []
+    results = []
+    if not start:
+        if select is None: results.append(arr)
+        elif select[0]: results.append(arr)
+
     i = 0
+    check_idx = start or end or (select is not None)
     while True:
-        try: arr = pickle.load(handle, **kwargs)
-        except EOFError: break
-        if select is not None:
+        try:
+            arr = pickle.load(handle, **kwargs)
+        except EOFError:
+            break        
+        if check_idx:
             i += 1
-            if not select[i]: continue
+            if end and i >= end:
+                break
+            if start and i < start:
+                continue
+            if select is not None and (not select[i - start]):
+                continue
         results.append(arr)
         
     handle.close()
