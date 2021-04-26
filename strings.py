@@ -175,3 +175,16 @@ def args2listdict(arg_strs, **kwargs):
             args.append(convert_type(option))
 
     return args, args2dict(kwargs_list, **kwargs)
+
+
+def lines2dict(lines, **kwargs):
+    """
+    Convert lines of text, such as that output by pprint.pprint(),
+    back to a dict.
+
+    kwargs supplied are returned by default.
+    """
+    string = lines[0].rstrip()
+    for i in range(1, len(lines)):
+        string += lines[i].rstrip()
+    return {**eval(string), **kwargs}
