@@ -65,7 +65,7 @@ class Logger(object):
 
 
     def __init__(self, name, level, store=False, logfile=None, printer=sys.stderr,
-                 critical_exit=True, store_notset=False):
+                 format_text=True, critical_exit=True, store_notset=False):
         """
         name:
         Prefix output with this string.
@@ -73,13 +73,16 @@ class Logger(object):
         level:
         one of the standard python logger module levels.
 
+        format_text:
+        call text.format(*args) for all self.logger.level(text, *args) calls.
+
         store:
         store all calls made to this object and the text associated with them, in
         obj.history. If False, only the most recent call is stored, in obj.previous.
 
         logfile:
         write all messages to this filehandle, in addition to stderr.
-        
+
         critical_exit:
         do sys.exit(msg) rather than return(msg) when self.critical(msg) is called.
         """
@@ -91,6 +94,7 @@ class Logger(object):
         self.store_history = store
         self.logfile = logfile
         self.printer = printer
+        self.format_text = format_text
         self.store_history_notset = store_notset
         self.critical_exit = critical_exit
 
@@ -103,7 +107,7 @@ class Logger(object):
         self.level_value = Logger.level_value[level]
 
 
-    def _handle(self, level, text, status_line=False, store=None):
+    def _handle(self, level, text, *args, status_line=False, store=None, format_text=None):
         """
         status_line:
         If True, print on same line, overwriting previous status output.
@@ -113,11 +117,16 @@ class Logger(object):
         and printed to self.logfile (if self.logfile is not None) unless
         status_line=True, or level is 0 and store_history_notset is False.
         Specify store=True (False) for a definitive store (or not).
+
+        format_text:
+        If None, go by object construction default.
         """
 
         stamp = timestamp()
-        out_str = '[{:<5} {} {}] {}'.format(Logger.level_str[level],
-                                            self.name, stamp, text)
+        if format_text or (self.format_text and format_text is not False):
+            text = text.format(*args)
+        out_str = '[{:<5} {} {}] '.format(Logger.level_str[level],
+                                          self.name, stamp) + text
         
         if self.level_value <= level:
             pad = '' if status_line else '\n'
@@ -144,24 +153,24 @@ class Logger(object):
     
 
     def debug(self, text, *args, **kwargs):
-        return self._handle(Logger.level_value['debug'], text.format(*args), **kwargs)
+        return self._handle(Logger.level_value['debug'], *args, **kwargs)
 
     def info(self, text, *args, **kwargs):
-        return self._handle(Logger.level_value['info'], text.format(*args), **kwargs)
+        return self._handle(Logger.level_value['info'], *args, **kwargs)
 
     def warning(self, text, *args, **kwargs):
-        return self._handle(Logger.level_value['warning'], text.format(*args), **kwargs)
+        return self._handle(Logger.level_value['warning'], *args, **kwargs)
 
     def error(self, text, *args, **kwargs):
-        return self._handle(Logger.level_value['error'], text.format(*args), **kwargs)
+        return self._handle(Logger.level_value['error'], *args, **kwargs)
 
     def critical(self, text, *args, **kwargs):
-        result = self._handle(Logger.level_value['critical'], text.format(*args), **kwargs)
+        result = self._handle(Logger.level_value['critical'], *args, **kwargs)
         if self.critical_exit:
             sys.exit('[{:<5} {} {}] Exiting...'.format(Logger.level_str[result[1]],
                                                        self.name, result[0]))
         else: return result
 
     def notset(self, text, *args, **kwargs):
-        return self._handle(Logger.level_value['notset'], text.format(*args), **kwargs)
+        return self._handle(Logger.level_value['notset'], *args, **kwargs)
 
