@@ -153,24 +153,24 @@ class Logger(object):
     
 
     def debug(self, text, *args, **kwargs):
-        return self._handle(Logger.level_value['debug'], *args, **kwargs)
+        return self._handle(Logger.level_value['debug'], text, *args, **kwargs)
 
     def info(self, text, *args, **kwargs):
-        return self._handle(Logger.level_value['info'], *args, **kwargs)
+        return self._handle(Logger.level_value['info'], text, *args, **kwargs)
 
     def warning(self, text, *args, **kwargs):
-        return self._handle(Logger.level_value['warning'], *args, **kwargs)
+        return self._handle(Logger.level_value['warning'], text, *args, **kwargs)
 
     def error(self, text, *args, **kwargs):
-        return self._handle(Logger.level_value['error'], *args, **kwargs)
+        return self._handle(Logger.level_value['error'], text, *args, **kwargs)
 
     def critical(self, text, *args, **kwargs):
-        result = self._handle(Logger.level_value['critical'], *args, **kwargs)
+        result = self._handle(Logger.level_value['critical'], text, *args, **kwargs)
         if self.critical_exit:
             sys.exit('[{:<5} {} {}] Exiting...'.format(Logger.level_str[result[1]],
                                                        self.name, result[0]))
         else: return result
 
     def notset(self, text, *args, **kwargs):
-        return self._handle(Logger.level_value['notset'], *args, **kwargs)
+        return self._handle(Logger.level_value['notset'], text, *args, **kwargs)
 
