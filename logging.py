@@ -152,6 +152,16 @@ class Logger(object):
         return self.previous
     
 
+    def flush_status(self):
+        """
+        If previous log output was a status line, print a new line and flush
+        that entry from self.previous. Otherwise, take no action.
+        """
+        if self.previous and self.previous[-1]:
+            self.printer.write('\n')
+            self.previous = None
+            
+
     def debug(self, text, *args, **kwargs):
         return self._handle(Logger.level_value['debug'], text, *args, **kwargs)
 
