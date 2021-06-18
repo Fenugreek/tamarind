@@ -403,7 +403,9 @@ class Sparse(object):
         if len(stats_data) == 1 and 'name' not in opts:
             #Get rid of redundant key column.
             if exclude is None: exclude = ['key']
-            else: exclude.append('key')
+            else:
+                if numpy.isscalar(exclude): exclude = [exclude]
+                exclude.append('key')
         return stats_data.output(include=include, exclude=exclude, fields=fields, all=all,
                                  filename=filename, line_space=line_space, stringify=stringify)
 
