@@ -962,7 +962,8 @@ class Datab(db.Datab):
                                                     [spec_index[f] for f in include])
                 fields = numpy.array(fields, dtype='S'+str(max([len(s[0])
                                                                 for s in self.spec])))
-                fields = numpy.insert(fields, insert_indices, include)
+                fields = [f.decode() for f in
+                          numpy.insert(fields, insert_indices, include)]
 
         for field in fields:
             if exclude is None or field not in exclude:
