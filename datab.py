@@ -300,8 +300,8 @@ class Datab(numpy.ndarray):
             if data is None:
                 if None_OK: return None
                 raise ValueError('Could not load %s' % filename_or_data)
+            if type(data[0]) == dict: data = subtype.dict2tuple(data, spec)
 
-        if type(data[0]) == dict: data = subtype.dict2tuple(data, spec)
         
         if spec is None and isinstance(data, numpy.ndarray):
             spec = data.dtype.descr
