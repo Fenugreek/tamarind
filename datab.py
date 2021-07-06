@@ -562,13 +562,13 @@ class Datab(numpy.ndarray):
             
         if fields is None: fields = [s[0] for s in self.spec]
         elif numpy.isscalar(fields): fields = [fields]
-        field_formats = [self.field_spec[f][2] for f in fields]
-        field_is_str = [self.field_spec[f][2][-1] == 's' for f in fields]
-
         if exclude is not None:
             if numpy.isscalar(exclude): exclude = [exclude]
             for skip_field in exclude:
                 if skip_field in fields: fields.remove(skip_field)
+
+        field_formats = [self.field_spec[f][2] for f in fields]
+        field_is_str = [self.field_spec[f][2][-1] == 's' for f in fields]
 
         if print_spec or print_header:
             print(self.header(fields=fields, spec=print_spec, rename=rename, delimiter=delimiter), file=fh)
