@@ -12,7 +12,7 @@ the Free Software Foundation, either version 3 of the License, or
 
 
 import sys
-import numpy
+import numpy as np
 from . import datab as db
 from . import arrays, logging, strings
 
@@ -131,7 +131,7 @@ class Sparse(object):
             if negative_weights is not None:
                 if weights is not None: raise AssertionError('Can not specify both weights and negative weights')
                 weights = abs(negative_weights)
-                values = values.copy()*numpy.sign(negative_weights)
+                values = values.copy()*np.sign(negative_weights)
             elif weights is None:
                 raise AssertionError('Weighted statistics object received no weights in update.')
             weights = arrays.nice_array(weights, shape=values.shape, logger=self.logger)
@@ -144,14 +144,14 @@ class Sparse(object):
         else:
             if weights is not None:
                 raise AssertionError('Unweighted statistics object received weights in update.')
-            fweights = numpy.ma.ones(values.size, dtype=float)            
+            fweights = np.ma.ones(values.size, dtype=float)            
             
         fweights.mask = mask.flatten()
         fvalues = values.flatten()
         fvalues.mask = fweights.mask
 
-        if IDs is None: IDs = numpy.array(list(range(fvalues.size)), dtype=int) + self.size
-        elif not isinstance(IDs, numpy.ndarray): IDs = numpy.array(IDs)
+        if IDs is None: IDs = np.array(list(range(fvalues.size)), dtype=int) + self.size
+        elif not isinstance(IDs, np.ndarray): IDs = np.array(IDs)
 
         self.size += fvalues.size
         count = fvalues.count()
@@ -159,8 +159,8 @@ class Sparse(object):
             if self.last_update is not None: self.last_update = ([], [], [])
             return 
 
-        min_index = numpy.ma.argmin(fvalues)
-        max_index = numpy.ma.argmax(fvalues)
+        min_index = np.ma.argmin(fvalues)
+        max_index = np.ma.argmax(fvalues)
         if self.count == 0:
             self.statistics['min'] = (fvalues[min_index], IDs.flat[min_index])
             self.statistics['max'] = (fvalues[max_index], IDs.flat[max_index])
@@ -171,10 +171,10 @@ class Sparse(object):
                 self.statistics['max'] = (fvalues[max_index], IDs.flat[max_index])
 
         self.count += count
-        self.sum_xw += numpy.ma.sum(fvalues * fweights)
-        self.sum_xxw += numpy.ma.sum(fvalues * fvalues * fweights)
-        self.sum_w += numpy.ma.sum(fweights)
-        self.sum_ww += numpy.ma.sum(fweights * fweights)
+        self.sum_xw += np.ma.sum(fvalues * fweights)
+        self.sum_xxw += np.ma.sum(fvalues * fvalues * fweights)
+        self.sum_w += np.ma.sum(fweights)
+        self.sum_ww += np.ma.sum(fweights * fweights)
 
         if self.last_update is not None:
             self.last_update = (fvalues, fweights, IDs.flat)
@@ -200,8 +200,8 @@ class Sparse(object):
         statistics['variance'] = \
             statistics['mean_square'] - statistics['mean'] ** 2
         if statistics['variance'] < 0.0: return self.statistics
-        statistics['std_dev'] = numpy.sqrt(statistics['variance'])
-        statistics['std_err'] = statistics['std_dev'] / numpy.sqrt(d_count)
+        statistics['std_dev'] = np.sqrt(statistics['variance'])
+        statistics['std_err'] = statistics['std_dev'] / np.sqrt(d_count)
 
         if statistics['std_err'] <= 0.0: return self.statistics        
         statistics['t-stat'] = statistics['mean'] / statistics['std_err']
@@ -276,9 +276,10 @@ class Sparse(object):
             label_other = None
             labels, buckets = [], []
             if type(group) == list or type(group) == tuple:
-                group = numpy.array(group)
-            for group_name in numpy.unique(group):
-                labels.append(group_name)
+                group = np.array(group)
+            for group_name in np.unique(group):
+                labels.append(group_name.decode() if hasattr(group_name, 'decode')
+                              else group_name)
                 buckets.append(group == group_name)
             if name is None: name = 'group'
 
@@ -303,16 +304,18 @@ class Sparse(object):
         if negative_weights is not None:
             if weights is not None: raise AssertionError('Can not specify both weights and negative weights')
             weights = abs(negative_weights)
-            data = data.copy()*numpy.sign(negative_weights)
+            data = data.copy()*np.sign(negative_weights)
 
-        if axis is None and numpy.isscalar(step) and step == 1:
+        if axis is None and np.isscalar(step) and step == 1:
             data, weights, IDs = \
                 arrays.select([data, weights, IDs],
                               sliced=sliced, overlay=overlay, select=select)
             if buckets is None:
                 results = cls(data, weights=weights, IDs=IDs, **opts).compute()
-                if datab is True: return Datab([results], formats=formats)
-                else: return results
+                if datab is True:
+                    return Datab([results], name=name or 'key', labels=labels, formats=formats)
+                else:
+                    return results
 
             if label_all:
                 all_labels = [label_all]
@@ -320,7 +323,7 @@ class Sparse(object):
                                      **opts)]
             else: all_labels, results = [], []
 
-            if label_other: other = numpy.ones(numpy.shape(data), dtype=bool)
+            if label_other: other = np.ones(np.shape(data), dtype=bool)
             buckets = arrays.select(buckets,
                                     sliced=sliced, overlay=overlay, select=select)
             all_labels.extend(labels)
@@ -356,10 +359,10 @@ class Sparse(object):
             raise ValueError('Axis option value 0 is the only one supported for Multivariate stats.')
 
         if weights is not None and weights.ndim == 1 and data.ndim == 2:
-            if len(weights) != numpy.shape(data)[1]:
+            if len(weights) != np.shape(data)[1]:
                 raise ValueError('shape mismatch: 1D weights cannot be broadcast to shape of values')
             sys.stderr.write('stats.stats: Broadcasting 1D weights for 2D values.\n')
-            weights = arrays.extend(weights, numpy.shape(data)[0]).T
+            weights = arrays.extend(weights, np.shape(data)[0]).T
 
         if label_all is not None:
             results = [cls(data, weights=weights, IDs=IDs, **opts).compute()]
@@ -371,7 +374,7 @@ class Sparse(object):
         start_idx = 0
         count = 0
         while start_idx < len(data):
-            if numpy.isscalar(step): end_idx = start_idx + step
+            if np.isscalar(step): end_idx = start_idx + step
             else: end_idx = start_idx + step[min(count, len(step)-1)]
             
             row_data, row_weights, row_IDs = \
@@ -386,8 +389,10 @@ class Sparse(object):
             start_idx = end_idx
             count += 1
 
-        if datab is False: return results
-        else: return Datab(results, labels=all_labels, name=name or 'key', formats=formats)
+        if datab is False:
+            return results
+        else:
+            return Datab(results, labels=all_labels, name=name or 'key', formats=formats)
 
 
     @classmethod
@@ -404,7 +409,7 @@ class Sparse(object):
             #Get rid of redundant key column.
             if exclude is None: exclude = ['key']
             else:
-                if numpy.isscalar(exclude): exclude = [exclude]
+                if np.isscalar(exclude): exclude = [exclude]
                 exclude.append('key')
         return stats_data.output(include=include, exclude=exclude, fields=fields, all=all,
                                  filename=filename, line_space=line_space, stringify=stringify)
@@ -438,6 +443,106 @@ class Sparse(object):
                              stringify=stringify)
         
 
+    @classmethod
+    def col_summary(cls, records, spec, weights=None, bucket=None, splits=[],
+                    group=None, all=False, exclude=None, datab=None,
+                    statistic='mean', formats='%7.4f', stringify=False, **opts):
+        """
+        Prints a summary statistic for each column in records as specified in <spec>.
+        
+        Example:
+        col_summary(results, [('growth', 'median'), 'gross_domestic/GDP%5.1f'],
+                    weights='population', group='continent', all=True)
+        
+        spec, statistic, formats:
+        a list with each element representing a field whose statistic is to be printed.
+        THe element is generally a 2-tuple (<names_fmt_str>, <stat_str>) but can also be
+        a string, in which case <stat_str> defaults to <statistic>.
+        
+        <names_fmt_str> can simply be the name of the field in records, for whom the
+        default statistic <statistic> is to be printed.
+        If it contains '/' then the name of the column printed is changed to that
+        which follows the '/'.
+        If it contains '%' then the values are fomatted as per the format specified;
+        otherwise the default <formats> is used.
+
+        weights:
+        print weighted statistics. can be a scalar <names_fmt_str> like in spec, or a
+        (<weights_array>, <name_fmt_str>) or a <weights_array> in which case 'weight'
+        is used as the name.
+
+        datab, stringify:
+        If True, a datab object of the results is returned. Otherwise the output is
+        printed or, if <stringify>, returned as a string.
+        """
+        results = []
+        for entry in spec:
+            field_name_fmt, stat = (entry, statistic) if np.isscalar(entry) else entry
+            field_name, fmt = field_name_fmt.split('%') if '%' in field_name_fmt else \
+                              (field_name_fmt, formats[1:])
+            field, name = field_name.split('/') if '/' in field_name else \
+                          (field_name, field_name)
+            results.append([records[field], (name, float, '%' + fmt), stat])    
+
+        kwargs = {}
+        if bucket:
+            field, name = bucket.split('/') if '/' in bucket else \
+                          (bucket, bucket)
+            kwargs = bucketer([records[field], name, splits], label_other=None)
+
+        groups = None
+        if group:
+            field, kwargs['name'] = group.split('/') if '/' in group else \
+                          (group, group)
+            groups = records[group]
+
+        if type(weights) == str:
+            field_name, wfmt = weights.split('%') if '%' in weights else \
+                              (weights, formats[1:])
+            field, wname = field_name.split('/') if '/' in field_name else \
+                           (field_name, field_name)
+            weights = records[field]
+        elif type(weights) == tuple:
+            weights, name_fmt = weights
+            wname, wfmt = name_fmt.split('%') if '%' in name_fmt else \
+                          (name_fmt, formats[1:])
+        elif weights is not None:
+            wname, wfmt = 'weight', formats[1:]
+
+        # Finally, compute the stats.
+        for entry in results:
+            entry.append(cls.stats(entry[0], weights, group=groups, all=all, **kwargs))
+        if datab is False:
+            return results
+
+        # Set up datab object.
+        spec = []
+        first_stats = results[0][-1]
+        if first_spec := getattr(first_stats, 'spec', None):
+            spec.append(first_spec[0])
+        spec.append(('count', int, '%5d'))
+        if weights is not None:
+            spec.extend([('d_count', float, '%7.1f'),
+                         (wname, float, f'%{wfmt}')])
+        spec.extend([entry[1] for entry in results])
+        output = db.Datab(shape=getattr(first_stats, 'shape', 1), spec=spec)
+
+        # Fill datab object.
+        if first_spec:
+            output[first_spec[0][0]] = first_stats[first_spec[0][0]]
+        output['count'] = first_stats['count']
+        if weights is not None:
+            output['d_count'] = first_stats['d_count']
+            output[wname] = first_stats['mean_wt']
+        for entry in results:
+            stat = entry[3][entry[2]]
+            output[entry[1][0]] = stat[0] if type(stat) == tuple else stat
+        if datab is True:
+            return output
+        
+        return output.output(exclude=exclude, stringify=stringify)
+        
+
 class Full(Sparse):
     """
     Store the values, so as to produce median and percentile values.
@@ -464,7 +569,7 @@ class Full(Sparse):
     def update(self, values, weights=None, IDs=None, negative_weights=None):
         Sparse.update(self, values, weights=weights, IDs=IDs,
                       negative_weights=negative_weights)
-        if numpy.isscalar(self.last_update): return
+        if np.isscalar(self.last_update): return
         values, weights, IDs = self.last_update
         if not len(values): return
         mask = values.mask | weights.mask 
@@ -475,18 +580,18 @@ class Full(Sparse):
         valid_values = values[~mask]
         if not len(valid_values): return
 
-        indices = numpy.ma.argsort(valid_values)
+        indices = np.ma.argsort(valid_values)
         update_data = \
-            numpy.array(list(zip(valid_values[indices], weights[~mask][indices],
+            np.array(list(zip(valid_values[indices], weights[~mask][indices],
                             IDs[~mask][indices])),
-                        dtype=numpy.dtype([('value', values[0].dtype),
+                        dtype=np.dtype([('value', values[0].dtype),
                                            ('weight', weights[0].dtype),
                                            ('ID', IDs[0].dtype)]))
         if self.data is None:
             self.data = update_data
         else:
             insert_indices = self.data['value'].searchsorted(update_data['value'])
-            self.data = numpy.insert(self.data, insert_indices, update_data)
+            self.data = np.insert(self.data, insert_indices, update_data)
 
 
     def compute_percentiles(self, percentiles=None):
@@ -494,14 +599,14 @@ class Full(Sparse):
         if self.data is None: return
         if percentiles is None: percentiles = Full.default_percentiles
         data = self.data
-        cumulative_weight = numpy.cumsum(data['weight'])
+        cumulative_weight = np.cumsum(data['weight'])
         sum_weight = cumulative_weight[-1]
         mean_weight = sum_weight / len(data)
         if sum_weight <= 0.0: return
         
         for entry in percentiles:
             wanted_center = sum_weight * entry[0] + mean_weight / 2
-            right_index = numpy.searchsorted(cumulative_weight, wanted_center)
+            right_index = np.searchsorted(cumulative_weight, wanted_center)
             if right_index == 0:
                 self.statistics[entry[1]] = (data[0][0], data[0][2])
             elif right_index == len(data):
@@ -530,7 +635,7 @@ class Full(Sparse):
         self.compute_percentiles()
 
         deviations = Full(weighted=True)
-        deviations.update(numpy.abs(data['value'] - self.statistics['median'][0]),
+        deviations.update(np.abs(data['value'] - self.statistics['median'][0]),
                           data['weight'])
         deviations.compute_percentiles(percentiles=[[0.5, 'mad']])
         self.statistics['mad'] = deviations.statistics['mad']
@@ -588,11 +693,11 @@ class Multivariate(Sparse):
             raise SyntaxError('Too many arguments to constructor.')
         elif len(data):
             data = data[0]
-            if not isinstance(data, numpy.ndarray): data = numpy.array(data)
-            if data.ndim == 1: data = data[:, numpy.newaxis]
-            if 'nvars' in opts and opts['nvars'] != numpy.shape(data)[-1]:
+            if not isinstance(data, np.ndarray): data = np.array(data)
+            if data.ndim == 1: data = data[:, np.newaxis]
+            if 'nvars' in opts and opts['nvars'] != np.shape(data)[-1]:
                 raise ValueError('Number of columns in data incompatible with nvars option.')
-            self.nvars = numpy.shape(data)[-1]
+            self.nvars = np.shape(data)[-1]
         elif 'nvars' in opts:
             if opts['nvars'] < 1: raise ValueError('Number of nvars must be at least 1.')
             else: self.nvars = opts['nvars']
@@ -610,10 +715,10 @@ class Multivariate(Sparse):
         self.count = 0
         self.sum_w = 0.0
         self.sum_ww = 0.0
-        self.count_ij = numpy.zeros((self.nvars, self.nvars), dtype=int)
-        self.sum_ijw = numpy.zeros((self.nvars, self.nvars))
-        self.sum_wij = numpy.zeros((self.nvars, self.nvars))
-        self.sum_wwij = numpy.zeros((self.nvars, self.nvars))
+        self.count_ij = np.zeros((self.nvars, self.nvars), dtype=int)
+        self.sum_ijw = np.zeros((self.nvars, self.nvars))
+        self.sum_wij = np.zeros((self.nvars, self.nvars))
+        self.sum_wwij = np.zeros((self.nvars, self.nvars))
         
         self.weighted = False
         if 'weighted' in opts:
@@ -633,15 +738,15 @@ class Multivariate(Sparse):
             self.all_update = []
         else: self.all_update = None
 
-        self.statistics = {'mean_ij': numpy.zeros((self.nvars, self.nvars)) + numpy.nan,
-                           'variance_ij': numpy.zeros((self.nvars, self.nvars)) + numpy.nan,
-                           'std_dev_ij': numpy.zeros((self.nvars, self.nvars)) + numpy.nan,
+        self.statistics = {'mean_ij': np.zeros((self.nvars, self.nvars)) + np.nan,
+                           'variance_ij': np.zeros((self.nvars, self.nvars)) + np.nan,
+                           'std_dev_ij': np.zeros((self.nvars, self.nvars)) + np.nan,
                            'count': 0,
                            'size': 0,
-                           'sum_ij': numpy.zeros((self.nvars, self.nvars)) + numpy.nan,
-                           'correlation_ij': numpy.zeros((self.nvars, self.nvars)) + numpy.nan,
-                           'multiple_ij': numpy.zeros((self.nvars, self.nvars)) + numpy.nan,
-                           'count_ij': numpy.zeros((self.nvars, self.nvars), dtype=int),
+                           'sum_ij': np.zeros((self.nvars, self.nvars)) + np.nan,
+                           'correlation_ij': np.zeros((self.nvars, self.nvars)) + np.nan,
+                           'multiple_ij': np.zeros((self.nvars, self.nvars)) + np.nan,
+                           'count_ij': np.zeros((self.nvars, self.nvars), dtype=int),
                            'nvars': self.nvars,
                            }
         self.Sparse = [Sparse(weighted=self.weighted) for i in range(self.nvars)]
@@ -649,8 +754,8 @@ class Multivariate(Sparse):
         if self.weighted:
             self.statistics['mean_wt'] = None
             self.statistics['d_count'] = 0.0
-            self.statistics['mean_wt_ij'] = numpy.zeros((self.nvars, self.nvars)) + numpy.nan
-            self.statistics['d_count_ij'] = numpy.zeros((self.nvars, self.nvars))
+            self.statistics['mean_wt_ij'] = np.zeros((self.nvars, self.nvars)) + np.nan
+            self.statistics['d_count_ij'] = np.zeros((self.nvars, self.nvars))
 
         if len(data): self.update(data, weights=opts['weights'],
                                   negative_weights=opts['negative_weights'])
@@ -668,7 +773,7 @@ class Multivariate(Sparse):
         """
 
         values = arrays.nice_array(values, logger=self.logger,
-                                   shape=(numpy.size(values) / self.nvars, self.nvars))
+                                   shape=(np.size(values) / self.nvars, self.nvars))
 
         if self.weighted:
             if negative_weights is not None:
@@ -676,7 +781,7 @@ class Multivariate(Sparse):
                 negative_weights = arrays.nice_array(negative_weights, shape=len(values),
                                                      logger=self.logger)
                 weights = abs(negative_weights)
-                values = values.copy()*numpy.sign(negative_weights)[:, numpy.newaxis]
+                values = values.copy()*np.sign(negative_weights)[:, np.newaxis]
             elif weights is None:
                 raise AssertionError('Weighted statistics object received no weights in update.')
             else:
@@ -684,7 +789,7 @@ class Multivariate(Sparse):
         else:
             if weights is not None:
                 raise AssertionError('Unweighted statistics object received weights in update.')
-            weights = numpy.ma.ones(len(values))
+            weights = np.ma.ones(len(values))
             
         for i in range(self.nvars):
             if self.weighted: self.Sparse[i].update(values[:, i], weights)
@@ -692,16 +797,16 @@ class Multivariate(Sparse):
 
             for j in range(i):
                 valid = ~(values.mask[:, i] | values.mask[:, j] | weights.mask)
-                self.count_ij[i, j] += numpy.sum(valid)
-                self.sum_ijw[i, j] += numpy.sum(values[:, i] * values[:, j] * weights)
-                self.sum_wij[i, j] += numpy.sum(weights[valid])
-                self.sum_wwij[i, j] += numpy.sum(weights[valid] ** 2)
+                self.count_ij[i, j] += np.sum(valid)
+                self.sum_ijw[i, j] += np.sum(values[:, i] * values[:, j] * weights)
+                self.sum_wij[i, j] += np.sum(weights[valid])
+                self.sum_wwij[i, j] += np.sum(weights[valid] ** 2)
                 
         self.size += len(weights)
-        valid = numpy.any(~values.mask, axis=1) & (~weights.mask)
-        self.count += numpy.sum(valid)
-        self.sum_w += numpy.sum(weights[valid])
-        self.sum_ww += numpy.sum(weights[valid] ** 2)
+        valid = np.any(~values.mask, axis=1) & (~weights.mask)
+        self.count += np.sum(valid)
+        self.sum_w += np.sum(weights[valid])
+        self.sum_ww += np.sum(weights[valid] ** 2)
 
         if self.last_update is not None: self.last_update = (values, weights, valid)
         if self.all_update is not None: self.all_update.append((values, weights, valid))
@@ -744,12 +849,12 @@ class Multivariate(Sparse):
                 statistics['variance_ij'][i, j] = statistics['mean_ij'][i, j] - \
                     sparse_stats[i]['mean'] * sparse_stats[j]['mean']
                 statistics['std_dev_ij'][i, j] = \
-                    numpy.sqrt(abs(statistics['variance_ij'][i, j])) * \
-                    numpy.sign(statistics['variance_ij'][i, j])
+                    np.sqrt(abs(statistics['variance_ij'][i, j])) * \
+                    np.sign(statistics['variance_ij'][i, j])
                 
                 statistics['correlation_ij'][i, j] =  \
                     statistics['variance_ij'][i, j] / \
-                    numpy.sqrt(statistics['variance_ij'][i, i] *
+                    np.sqrt(statistics['variance_ij'][i, i] *
                                statistics['variance_ij'][j, j])
                 
                 if statistics['mean_ij'][j, j] > 0:
@@ -858,7 +963,7 @@ class Datab(db.Datab):
                 break
         if not first_result: return None
 
-        if not len(labels):
+        if labels is None or not len(labels):
             labels = [str(d) for d in range(len(results))]
         else: labels = [str(l) for l in labels]
         
@@ -866,7 +971,7 @@ class Datab(db.Datab):
         for stat in list(first_result.keys()):
             if stat not in Datab.spec_index: continue
             indices.append(Datab.spec_index[stat])
-        statistics = numpy.array(Datab.spec)[numpy.sort(indices)]
+        statistics = np.array(Datab.spec)[np.sort(indices)]
 
         stats_data, none_indices = [], []
         key_len = len(name)
@@ -880,7 +985,7 @@ class Datab(db.Datab):
 
             for stat in [s[0] for s in statistics]:
                 if stat not in Datab.matrix_stat:
-                    if result[stat] is None or numpy.ndim(result[stat]) == 0:
+                    if result[stat] is None or np.ndim(result[stat]) == 0:
                         row_stats.append(result[stat])
                     # for (min|max, arg) stats, just store the min/max value
                     else: row_stats.append(result[stat][0])
@@ -942,8 +1047,8 @@ class Datab(db.Datab):
         exclude this statistic field(s) from what's going to be printed.
         """
 
-        if numpy.isscalar(exclude): exclude = [exclude]
-        if numpy.isscalar(include): include = [include]
+        if np.isscalar(exclude): exclude = [exclude]
+        if np.isscalar(include): include = [include]
 
         if 'fields' in kwargs and kwargs['fields'] is not None:
             super(Datab, self).output(**kwargs)
@@ -960,12 +1065,12 @@ class Datab(db.Datab):
             if include is not None:
                 spec_index = dict([(f[0], i) for i, f in enumerate(self.spec)])
                 field_indices = [spec_index[f] for f in fields]
-                insert_indices = numpy.searchsorted(field_indices,
+                insert_indices = np.searchsorted(field_indices,
                                                     [spec_index[f] for f in include])
-                fields = numpy.array(fields, dtype='S'+str(max([len(s[0])
+                fields = np.array(fields, dtype='S'+str(max([len(s[0])
                                                                 for s in self.spec])))
                 fields = [f.decode() for f in
-                          numpy.insert(fields, insert_indices, include)]
+                          np.insert(fields, insert_indices, include)]
 
         for field in fields:
             if exclude is None or field not in exclude:
@@ -981,6 +1086,10 @@ def summary(*args, **kwargs):
     
 def loop_summary(*args, **kwargs):
     return Full.loop_summary(*args, **kwargs)
+
+
+def col_summary(*args, **kwargs):
+    return Full.col_summary(*args, **kwargs)
 
     
 def stats(*args, **kwargs):
@@ -1030,11 +1139,11 @@ def bucketer(*data_field_splits, **kwargs):
     name = ''
     for d_f_s in data_field_splits:
         data, field, splits = d_f_s
-        if numpy.isscalar(splits): splits = [splits]
+        if np.isscalar(splits): splits = [splits]
         if name: name += '|'
         name += name_fmt % field
         
-        overlays = [numpy.ones(numpy.shape(data[0] if type(data) == tuple else data),
+        overlays = [np.ones(np.shape(data[0] if type(data) == tuple else data),
                                dtype=bool)] if label_all else []
         labels = [str_fmt % label_all] if label_all else []
 
@@ -1056,12 +1165,12 @@ def bucketer(*data_field_splits, **kwargs):
             overlays_labels.append((overlays, labels))
             continue
         
-        other_overlay = numpy.ones(numpy.shape(data), dtype=bool) if label_other else None
+        other_overlay = np.ones(np.shape(data), dtype=bool) if label_other else None
         for count, value in enumerate(splits):
             if count == 0:
                 overlays.append(data < value)
                 if label_other: other_overlay &= ~overlays[-1]
-                labels.append(fmt % (-numpy.inf, value))
+                labels.append(fmt % (-np.inf, value))
             if count > 0 and len(splits) > 1:
                 overlays.append((data < value) & (data >= splits[count - 1]))
                 if label_other: other_overlay &= ~overlays[-1]
@@ -1069,7 +1178,7 @@ def bucketer(*data_field_splits, **kwargs):
             if count == len(splits) - 1:
                 overlays.append(data >= value)
                 if label_other: other_overlay &= ~overlays[-1]
-                labels.append(fmt % (value, numpy.inf))
+                labels.append(fmt % (value, np.inf))
                 
         if label_other:
             overlays += [other_overlay]
