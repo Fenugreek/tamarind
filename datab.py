@@ -339,7 +339,9 @@ class Datab(numpy.ndarray):
             elif 'b' in type_str: defaults = Datab.field_defaults['bool']
             else: defaults = Datab.field_defaults['float']
             empty_record.append(defaults[1])
-            if len(field_spec) == 2: field_spec.append(defaults[0])
+            if len(field_spec) == 2:
+                field_spec.append(defaults[0])
+                full_spec[i] = tuple(field_spec)
         empty_record = tuple(empty_record)
 
         if type(data) == list:
