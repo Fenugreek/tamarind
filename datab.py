@@ -226,6 +226,8 @@ class Datab(numpy.ndarray):
         datatype, e.g. ('quantity', int). The third element, the format spec, e.g. '%6d'.
         The fourth, the default value in case of missing data, e.g. -1.
         The latter two elements are optional.
+        If the datatype is str, it is converted to 'S<N>' where <N> is the length
+        of the longest value in the data.
 
         add_spec (optional):
         use if you want to allocate space in the array for uninitialized fields.
@@ -319,7 +321,12 @@ class Datab(numpy.ndarray):
                 else: empty_values.append(Datab.field_defaults['float'][1])
 
         empty_record = []
-        for field_spec in full_spec:
+        for i, field_spec in enumerate(full_spec):
+            if field_spec[1] == str:
+                # Find length N of longest value in data, and set spec to S<N>
+                N = max([len(d[i]) for d in data])
+                field_spec = [field_spec[0], 'S' + str(N)] + list(field_spec[2:])
+                full_spec[i] = tuple(field_spec)
             if len(field_spec) > 3:
                 empty_record.append(field_spec[3])
                 continue
