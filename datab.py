@@ -298,18 +298,26 @@ class Datab(numpy.ndarray):
                 if spec is None:
                     raise ValueError('No spec and could not determine from %s' %
                                      filename_or_data)
-            else: data = filename_or_data
+            else:
+                data = filename_or_data
             if data is None:
                 if None_OK: return None
                 raise ValueError('Could not load %s' % filename_or_data)
-            if type(data[0]) == dict: data = subtype.dict2tuple(data, spec)
+            if type(data[0]) == dict:
+                data = subtype.dict2tuple(data, spec)
 
         
-        if spec is None and isinstance(data, numpy.ndarray):
-            spec = data.dtype.descr
+        if spec is None:
+            if hasattr(data, 'spec'):
+                spec = data.spec
+            elif isinstance(data, numpy.ndarray):
+                spec = data.dtype.descr
         full_spec = [list(s) for s in spec]
         
         if add_spec is not None:
+            if isinstance(data, numpy.ndarray):
+                # Need to do this to allocate more space to each element.
+                data = list(data)
             empty_values = []
             for field_spec in add_spec:
                 full_spec.append(list(field_spec))
