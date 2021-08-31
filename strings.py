@@ -188,3 +188,29 @@ def lines2dict(lines, **kwargs):
     for i in range(1, len(lines)):
         string += lines[i].rstrip()
     return {**eval(string), **kwargs}
+
+
+def abbrev(string, length, pfx=None, sfx=None, spanner='...'):
+    """
+    Abbreviate <string> if longer than <length> as
+    '<string[:pfx]><spanner><string[-sfx:]>'
+
+    Soecifying one of <pfx> or <sfx> will infer the other.
+    If neither given, a <sfx> that is 2 * <pfx> will be chosen.
+    """
+    if length >= len(string):
+        return string
+
+    len_span = len(spanner)
+    if pfx is not None:
+        if sfx is not None:
+            assert(pfx + sfx + len_span == length)
+        else:
+            sfx = length - len_span - pfx
+    elif sfx is not None:
+        pfx = length - len_span - sfx
+    else:
+        pfx = (length - len_span) // 3
+        sfx = length - len_span - pfx
+
+    return string[:pfx] + spanner + string[-sfx:]
