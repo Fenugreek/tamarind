@@ -418,15 +418,14 @@ class Sparse(object):
     @classmethod
     def loop_summary(cls, data, weights=None, include=None, exclude=None, fields=None,
                      labels=None, name='var', formats=None, all=False,
-                     stringify=False, **opts):
+                     stringify=False, sort=None, **opts):
         """
         Calls summary() in a loop for multiple responses/predictors.
         """
 
         if type(data) != tuple:
             raise ValueError('Data needs to be tuple so looping can happen.')
-        if 'datab' in opts: datab = opts.pop('datab')
-        else: datab = None
+        datab = opts.pop('datab', None)
 
         output = []
         all_labels = []
@@ -440,13 +439,13 @@ class Sparse(object):
         output = Datab(output, labels=all_labels, name=name, formats=formats)
         if datab is True: return output
         return output.output(include=include, exclude=exclude, fields=fields, all=all,
-                             stringify=stringify)
+                             stringify=stringify, sort=sort)
         
 
     @classmethod
     def col_summary(cls, records, spec, weights=None, bucket=None, splits=[],
-                    group=None, all=False, exclude=None, datab=None,
-                    statistic='mean', formats='%7.4f', stringify=False, **opts):
+                    group=None, statistic='mean', all=False, exclude=None,
+                    datab=None, formats='%7.4f', stringify=False, sort=None, **opts):
         """
         Prints a summary statistic for each column in records as specified in <spec>.
         
@@ -540,7 +539,7 @@ class Sparse(object):
         if datab is True:
             return output
         
-        return output.output(exclude=exclude, stringify=stringify)
+        return output.output(exclude=exclude, stringify=stringify, sort=sort)
         
 
 class Full(Sparse):
@@ -932,6 +931,7 @@ class Datab(db.Datab):
             ('std_dev', float, '%8.4f'), ('t-stat', float, '%7.3f'),
             ('median', float, '%8.4f'), ('mad', float, '%8.4f'),
             ('25th%le', float, '%8.4f'), ('75th%le', float, '%8.4f'),
+            ('10th%le', float, '%8.4f'), ('90th%le', float, '%8.4f'),
             ('correlation_ij', float, '%7.4f'), ('multiple_ij', float, '%10.6f'),
             ('std_err', float, '%8.6f'), ('variance', float, '%8.6f'),
             ('min', float, '%8.3f'), ('max', float, '%8.3f'),
