@@ -136,6 +136,8 @@ def plot(x, y, x_weights=None, y_weights=None, size=0.05,
     line_args, error_args:
     args to pass to plot() when plotting the main line and error bands respectively.
     """
+    x = numpy.array(x, copy=False)
+    y = numpy.array(y, copy=False)
     
     if numpy.ndim(y) > numpy.ndim(x):
         # multivariate response; plot sum(y0*y1)/sum(y1*y1) by default
