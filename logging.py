@@ -11,6 +11,7 @@ the Free Software Foundation, either version 3 of the License, or
 
 from time import ctime
 import sys
+from tamarind.strings import args2listdict
 
 
 def timestamp():
@@ -97,6 +98,25 @@ class Logger(object):
         self.format_text = format_text
         self.store_history_notset = store_notset
         self.critical_exit = critical_exit
+
+    @classmethod
+    def from_opt(cls, opt_str, name='LOG', **kwargs):
+        """
+        Initialize from a commandline option string.
+
+        opt_str:
+        <level> [<name>] [logfile=<fname>] [opt1=...] [opt2=...]
+
+        kwargs:
+        Other options to pass on to constructor.
+        """
+        oargs, okwargs = args2listdict(opt_str, **kwargs)
+        if logfile := okwargs.pop('logfile', None):
+            okwargs['logfile'] = open(logfile, 'w')
+
+        level = oargs.pop(0)
+        if oargs: name = oargs[0]            
+        return cls(name, level, **okwargs)
 
 
     def setLevel(self, level):
