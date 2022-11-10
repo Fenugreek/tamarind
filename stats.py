@@ -772,7 +772,7 @@ class Multivariate(Sparse):
         """
 
         values = arrays.nice_array(values, logger=self.logger,
-                                   shape=(np.size(values) / self.nvars, self.nvars))
+                                   shape=(np.size(values) // self.nvars, self.nvars))
 
         if self.weighted:
             if negative_weights is not None:
@@ -1051,8 +1051,7 @@ class Datab(db.Datab):
         if np.isscalar(include): include = [include]
 
         if 'fields' in kwargs and kwargs['fields'] is not None:
-            super(Datab, self).output(**kwargs)
-            return
+            return super(Datab, self).output(**kwargs)
         
         if self.identifier is not None and \
                (exclude is None or self.identifier not in exclude):
