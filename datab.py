@@ -137,7 +137,7 @@ class Datab(numpy.ndarray):
         data = []
         for line in lines:
             if line[0] == '#': continue
-            row_data = line.split(separator)
+            row_data = line.encode('utf-8').split(separator)
 
             if select_field_values:
                 include = True
