@@ -9,17 +9,18 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-from time import ctime
+from time import localtime
 import sys
 from tamarind.strings import args2listdict
 
 
 def timestamp():
-    """How timestamps appear in log messages: HH:MM:SS"""
-    return ctime()[11:19]
+    """How timestamps appear in log messages: mmdd HH:MM:SS"""
+    t = localtime()
+    return f'{t.tm_mon:02d}{t.tm_mday:02d} {t.tm_hour:02d}:{t.tm_min:02d}:{t.tm_sec:02d}'
 
 
-class Logger(object):
+class Logger:
     """
     SYNOPSIS
 
@@ -100,7 +101,7 @@ class Logger(object):
         self.critical_exit = critical_exit
 
     @classmethod
-    def from_opt(cls, opt_str, name='LOG', **kwargs):
+    def from_opt(cls, opt_str, name='LOG', logfile_mode='a', **kwargs):
         """
         Initialize from a commandline option string.
 
@@ -112,7 +113,7 @@ class Logger(object):
         """
         oargs, okwargs = args2listdict(opt_str, **kwargs)
         if logfile := okwargs.pop('logfile', None):
-            okwargs['logfile'] = open(logfile, 'w')
+            okwargs['logfile'] = open(logfile, logfile_mode)
 
         level = oargs.pop(0)
         if oargs: name = oargs[0]            
@@ -204,3 +205,20 @@ class Logger(object):
     def notset(self, text, *args, **kwargs):
         return self._handle(Logger.level_value['notset'], text, *args, **kwargs)
 
+
+class SessionLogger(Logger):
+    """Add a prefix <name> to log messages."""
+    
+    def __init__(self, name, logger):
+        self.name = name
+        self.logger = logger
+
+    def flush_status(self):
+        self.logger.flush_status()
+
+    def _handle(self, level, text, *args, **kwargs):
+        self.logger._handle(level, f'[{self.name}] ' + text, *args, **kwargs)
+
+    def setLevel(self, level):
+        self.logger.setLevel(level)
+        
