@@ -10,9 +10,17 @@ the Free Software Foundation, either version 3 of the License, or
 """
 
 import re
-import numpy
+import numpy, unidecode
 
 format_expression = re.compile('%([+-]*)(\d+)\.*\d*\w')
+
+def slugify(input_str, lower=True):
+    """Transform input string <text> to URL friendly name."""
+    output = unidecode.unidecode(input_str)
+    if lower:
+        output = output.lower()
+    return re.sub(r'[\W_]+', '-', output)
+
 
 def fmt(string, format, align=None):
     """
