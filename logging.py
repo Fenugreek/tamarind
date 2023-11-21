@@ -67,7 +67,7 @@ class Logger:
 
 
     def __init__(self, name, level, store=False, logfile=None, printer=sys.stderr,
-                 format_text=True, critical_exit=True, store_notset=False):
+                 format_text=False, critical_exit=True, store_notset=False):
         """
         name:
         Prefix output with this string.
@@ -106,7 +106,7 @@ class Logger:
         Initialize from a commandline option string.
 
         opt_str:
-        <level> [<name>] [logfile=<fname>] [opt1=...] [opt2=...]
+        [<level>, [<name>, logfile=<fname>, opt1=..., opt2=...]]
 
         kwargs:
         Other options to pass on to constructor.
