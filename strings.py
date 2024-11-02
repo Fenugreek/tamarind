@@ -144,6 +144,11 @@ def args2dict(arg_strs, **kwargs):
 
     If commas present after the '=' delimiter, value is a list.
 
+    If more than one '=' present in an argument, return a nested dict as follows:
+        ['age=Deepak=12']
+    returns
+        {'age': {'Deepak': 12}}
+        
     kwargs supplied are returned by default.
     """
     
@@ -151,11 +156,23 @@ def args2dict(arg_strs, **kwargs):
         arg_strs = [arg_strs]
 
     for option in arg_strs or []:
-        key, value = option.split('=')
+        key, value = option.split('=', maxsplit=1)
+        if '=' in value:
+            key2, value = value.split('=')
+            key = [key, key2]
+
         if ',' in value:
-            kwargs[key] = [convert_type(v) for v in value.split(',')]
+            value = [convert_type(v) for v in value.split(',')]
         else:
-            kwargs[key] = convert_type(value)
+            value = convert_type(value)
+
+        if type(key) == list:
+            if key[0] in kwargs:
+                kwargs[key[0]][key[1]] = value
+            else:
+                kwargs[key[0]] = {key[1]: value}
+        else:
+            kwargs[key] = value
 
     return kwargs
 
