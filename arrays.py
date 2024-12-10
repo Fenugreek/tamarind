@@ -708,3 +708,30 @@ def zip_func(func, *args):
         else: stack.append(arg)
     return func(numpy.vstack(stack), axis=0)
 
+
+def intersect_intervals(arr1, arr2):
+    """
+    Returns list of segments that are the overlapping intervals between arr1 and arr2.
+
+    arr1, arr2:
+    2D array/lists with two columns, each row an interval, and in ascending order.
+
+
+    segments returned:
+    list of ((left, right), (idx1, idx2))
+    """
+    segments = []
+
+    idx1, idx2 = 0, 0
+    while idx1 < len(arr1) and idx2 < len(arr2):     
+        left = max(arr1[idx1][0], arr2[idx2][0])
+        right = min(arr1[idx1][1], arr2[idx2][1])
+        if left <= right:
+            segments.append(((left, right), (idx1, idx2)))
+
+        if arr1[idx1][1] < arr2[idx2][1]:
+            idx1 += 1
+        else:
+            idx2 += 1
+            
+    return segments
