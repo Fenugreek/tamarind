@@ -1,5 +1,5 @@
 """
-Some useful data structures missing from standard python.
+Some useful data structures and functions missing from standard python.
 """
 
 class Trie:
@@ -61,3 +61,24 @@ class Trie:
             count += 1
         return count, current_dict.get(self._end, None)
     
+
+def nested_count(obj):
+    """
+    Where <obj> is a nested dict or list or combination thereof,
+    return count of total leaf elements.
+    """
+    count = 0
+    stack = [obj]
+    while len(stack):
+        item = stack.pop()
+        if type(item) == list:
+            for subitem in item:
+                if type(subitem) == list or type(subitem) == dict:
+                    stack.append(subitem)
+                else:
+                    count += 1
+        elif hasattr(item, 'values'):
+            stack.extend(list(item.values()))
+        else:
+            raise ValueError(f"Encountered type {type(item)} that's neither list nor dict.")
+    return count
