@@ -1,4 +1,29 @@
 """Some utilities for dict analysis manipulation."""
+import csv
+from sqlitedict import SqliteDict
+
+def sqldict_invert(sql_fname, exclude=None, include=None):
+    """
+    Reverse the dict implicit in the sqlite dict.
+    Note: If keys are not unique, this is likely not a good call.
+    """
+    result = {}
+    for table in SqliteDict.get_tablenames(sql_fname):
+        if include and table not in include: continue
+        if exclude and table in exclude: continue
+        for key in SqliteDict(sql_fname, table).keys():
+            result[key] = table
+    return result
+
+
+def sqldict_tableset(sql_fname):
+    """
+    Return dict with tablenames as keys and a set of table keys as the values.
+    """
+    result = {}
+    for table in SqliteDict.get_tablenames(sql_fname):
+        result[table] = set(SqliteDict(sql_fname, table).keys())
+    return result
 
 
 def diff(basedict, newdict, ignore_missing=False, convert_bool=False):
@@ -17,3 +42,44 @@ def diff(basedict, newdict, ignore_missing=False, convert_bool=False):
         if value != existing:
             diff[key] = (existing, value)
     return diff
+
+
+def csv_to_dict(filename, index_field):
+    """
+    Read a CSV file and return a dictionary indexed by the specified field.
+    
+    Args:
+        filename (str): Path to the CSV file
+        index_field (str): Name of the field to use as dictionary keys
+    
+    Returns:
+        dict: Dictionary where keys are values from index_field and values are row dictionaries
+    
+    Raises:
+        FileNotFoundError: If the CSV file doesn't exist
+        KeyError: If the index_field is not found in the CSV headers
+        ValueError: If there are duplicate values in the index field
+    """
+    result_dict = {}
+    
+    try:
+        with open(filename, 'r', newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            
+            # Check if index_field exists in headers
+            if index_field not in reader.fieldnames:
+                raise KeyError(f"Index field '{index_field}' not found in CSV headers: {reader.fieldnames}")
+            
+            for row in reader:
+                key = row[index_field]
+                
+                # Check for duplicate keys
+                if key in result_dict:
+                    raise ValueError(f"Duplicate value '{key}' found in index field '{index_field}'")
+                
+                result_dict[key] = row
+                
+    except FileNotFoundError:
+        raise FileNotFoundError(f"CSV file '{filename}' not found")
+    
+    return result_dict
