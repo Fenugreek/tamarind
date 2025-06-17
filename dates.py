@@ -32,3 +32,17 @@ def dt(dates, call=None):
         results.append(getattr(date, call)() if call else date)
     return numpy.array(results).reshape(numpy.shape(dates))
 
+
+str2mth = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
+           'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12}
+def str2date(date_str):
+    day, month, year = date_str.split(':')[0].split('/')
+    return datetime.date(int(year), str2mth[month], int(day))
+
+def days_since(dates, since='1/Jan/2023'):
+    since_dt = str2date(since)
+    if numpy.isscalar(dates):
+        return (str2date(dates) - since_dt).days
+
+    results = [(str2date(date_str) - since_dt).days for date_str in dates]
+    return numpy.array(results)
