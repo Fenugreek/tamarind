@@ -133,7 +133,7 @@ def convert_type(arg_str):
     return result
 
     
-def args2dict(arg_strs, **kwargs):
+def args2dict(arg_strs, preserve_commas=False, **kwargs):
     """
     Given a list of command-line arguments, like
         ['level=INFO', 'layers=2', 'rate=0.5'],
@@ -142,7 +142,8 @@ def args2dict(arg_strs, **kwargs):
     with appropriate type conversions for the values inferred
     (in above example, retain as string, convert to int, convert to float).
 
-    If commas present after the '=' delimiter, value is a list.
+    If commas present after the '=' delimiter, value is a list,
+    unless preserve_commas=True.
 
     If more than one '=' present in an argument, return a nested dict as follows:
         ['age=Deepak=12']
@@ -161,7 +162,7 @@ def args2dict(arg_strs, **kwargs):
             key2, value = value.split('=')
             key = [key, key2]
 
-        if ',' in value:
+        if ',' in value and not preserve_commas:
             value = [convert_type(v) for v in value.split(',')]
         else:
             value = convert_type(value)
@@ -177,7 +178,7 @@ def args2dict(arg_strs, **kwargs):
     return kwargs
 
 
-def args2listdict(arg_strs, **kwargs):
+def args2listdict(arg_strs, preserve_commas=False, **kwargs):
     """
     Allow for arguments that do not have '=', returning them as a list.
     So a tuple is returned -- a list plus a dict.
@@ -194,8 +195,8 @@ def args2listdict(arg_strs, **kwargs):
         if '=' in option:
             kwargs_list.append(option)
             continue
-        if ',' in option:
-            args.append(convert_type(v) for v in option.split(','))
+        if ',' in option and not preserve_commas:
+            args.append([convert_type(v) for v in option.split(',')])
         else:
             args.append(convert_type(option))
 
@@ -239,3 +240,19 @@ def abbrev(string, length, pfx=None, sfx=None, spanner='...'):
         sfx = length - len_span - pfx
 
     return string[:pfx] + spanner + string[-sfx:]
+
+
+def replace_ext(fname, new_ext):
+    """
+    Replace a filename extension with given new extension.
+    If no extension exists, just add the new extension.
+    If new_ext == '', remove existing extension.
+    """
+    if new_ext and new_ext[0] != '.':
+        new_ext = '.' + new_ext
+        
+    toks = fname.split('.')
+    if len(toks) == 1:
+        return fname + new_ext
+
+    return '.'.join(toks[:-1]) + new_ext
