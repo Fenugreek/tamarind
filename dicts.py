@@ -1,31 +1,7 @@
 """Some utilities for dict analysis manipulation."""
 import csv
-from sqlitedict import SqliteDict
 
-def sqldict_invert(sql_fname, exclude=None, include=None):
-    """
-    Reverse the dict implicit in the sqlite dict.
-    Note: If keys are not unique, this is likely not a good call.
-    """
-    result = {}
-    for table in SqliteDict.get_tablenames(sql_fname):
-        if include and table not in include: continue
-        if exclude and table in exclude: continue
-        for key in SqliteDict(sql_fname, table).keys():
-            result[key] = table
-    return result
-
-
-def sqldict_tableset(sql_fname):
-    """
-    Return dict with tablenames as keys and a set of table keys as the values.
-    """
-    result = {}
-    for table in SqliteDict.get_tablenames(sql_fname):
-        result[table] = set(SqliteDict(sql_fname, table).keys())
-    return result
-
-
+    
 def diff(basedict, newdict, ignore_missing=False, convert_bool=False):
     """
     Return dict of keys to (existing, new) values that represents the
