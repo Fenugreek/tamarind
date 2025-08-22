@@ -246,10 +246,10 @@ class Sparse(object):
         each clump can have variable number of rows.
 
         label_all:
-        Relevant only when axis or split/buckets option present. If not None,
+        Relevant only when group, axis or split/buckets option present. If not None,
         compute stats over entire dataset, in addition to for each index of the
-        axis or split/buckets, and place results in an entry of output with this
-        label.
+        axis or split/buckets or group value, and place results in an entry of output
+        with this label.
 
         label_other:
         Relevant only when buckets option present. If not None, compute stats
