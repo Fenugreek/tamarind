@@ -52,3 +52,38 @@ def table_counts(sql_fname, field=None, key=None, **kwargs):
             result[table] = Counter(vals)
 
     return result
+
+
+def append(sql_fname, add_sql_fname, tables=None, overwrite=False, **kwargs):
+    """
+    Add entries in <add_sql_fname> to <sql_fname>.
+
+    tables:
+    For only this table / list of tables.
+
+    overwrite:
+    If true, overwrite existing entries.
+    """
+
+    if tables is None:
+        tables = SqliteDict.get_tablenames(add_sql_fname)
+        tables.sort()
+    elif type(tables) == str:
+        tables = [tables]
+
+    added = 0
+    for table in tables:
+        sd = SqliteDict(sql_fname, tablename=table, **kwargs)
+        add_sd = SqliteDict(add_sql_fname, tablename=table, **kwargs)
+        if overwrite:
+            for key, val in add_sd.items():
+                sd[key] = val
+                added += 1
+        else:
+            for key, val in add_sd.items():
+                if key not in sd:
+                    sd[key] = val
+                added += 1
+        sd.commit()
+
+    return added
