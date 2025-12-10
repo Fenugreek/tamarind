@@ -57,6 +57,7 @@ def table_counts(sql_fname, field=None, key=None, **kwargs):
 def append(sql_fname, add_sql_fname, tables=None, overwrite=False, **kwargs):
     """
     Add entries in <add_sql_fname> to <sql_fname>.
+    Returns number of entries added, and list of pre-existing keys that were skipped.
 
     tables:
     For only this table / list of tables.
@@ -71,7 +72,7 @@ def append(sql_fname, add_sql_fname, tables=None, overwrite=False, **kwargs):
     elif type(tables) == str:
         tables = [tables]
 
-    added = 0
+    added, preexisting = 0, []
     for table in tables:
         sd = SqliteDict(sql_fname, tablename=table, **kwargs)
         add_sd = SqliteDict(add_sql_fname, tablename=table, **kwargs)
@@ -81,9 +82,11 @@ def append(sql_fname, add_sql_fname, tables=None, overwrite=False, **kwargs):
                 added += 1
         else:
             for key, val in add_sd.items():
-                if key not in sd:
+                if key in sd:
+                    preexisting.append((table, key))
+                else:
                     sd[key] = val
-                added += 1
+                    added += 1
         sd.commit()
 
-    return added
+    return added, preexisting
