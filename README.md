@@ -14,6 +14,24 @@ Keep track of (optionally weighted) descriptive statistics of incoming data, han
 Perform multivariate weighted linear regression, handling nans and returning
 associated statistics.
 
+- **strings** :
+Utilities for string manipulation not found in the standard library, including numpy-based formatting and unidecode support.
+
+- **dicts** :
+Utilities for dict analysis and manipulation, including diffing two dicts and CSV I/O.
+
+- **bools** :
+Utilities for boolean logic on dict fields, e.g. multi-condition tests.
+
+- **integers** :
+Utilities for integer manipulation, e.g. finding the squarest factor pair of an integer.
+
+- **structs** :
+Useful data structures missing from standard Python, including a `Trie` (prefix tree) implementation.
+
+- **functions** :
+Useful numeric/array utility functions missing from numpy/scipy.
+
 Installation
 ------------
 From the directory where you downloaded the files, run the following command-line to install the library:
