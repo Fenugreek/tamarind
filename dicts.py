@@ -1,7 +1,40 @@
 """Some utilities for dict analysis manipulation."""
 import csv
+from functools import reduce
+import operator
+from collections import defaultdict
 
-    
+def get_nested(basedict, keys):
+    """
+    Given a list of nested keys, return basedict[keys[0]][keys[1]][...]
+    """
+    return reduce(operator.getitem, keys, basedict)
+
+
+def dict_list(records, key, field=None):
+    """
+    Given a list of records and a key field, return a dict with values of key field
+    as keys and corresponding records as lists of values.
+
+    If field is not None, returned values are record[field]. If field is not found
+    in a record or the value is None, the record is skipped.
+
+    If key not found in a record or record[key] is None, that record is skipped.
+    """
+
+    output = defaultdict(list)
+    for entry in records:
+        if (identifier := entry.get(key)) is None:
+            continue
+        if field is not None:
+            if field in entry:
+                output[identifier].append(entry[field])
+        else:
+            output[identifier].append(entry)
+
+    return dict(output) # Remove defaultdict
+
+
 def diff(basedict, newdict, ignore_missing=False, convert_bool=False):
     """
     Return dict of keys to (existing, new) values that represents the
