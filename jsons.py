@@ -11,32 +11,45 @@ def load_jsonl(filename_or_fh, filter_kv=None):
     ----------
     filename_or_fh : str or file handle
         Path to a .jsonl file, or an already-opened file handle.
-    filter_kv : tuple of (key, value), optional
-        If provided, only return dicts that contain the given key with the
-        given value. Non-dict objects are also excluded when filtering.
+    filter_kv : tuple of ([key | keys], value), optional
+        If provided, only return dicts that contain the given key or nested
+        keys (provided as a tuple) with the given non-None value.
+        Non-dict objects are excluded.
 
     Returns
     -------
     list
         Parsed objects from each line.
     """
-    def _read_lines(fh):
-        results = []
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            obj = json.loads(line)
-            if filter_kv is not None:
-                if not isinstance(obj, dict):
-                    continue
-                if obj.get(filter_kv[0]) != filter_kv[1]:
-                    continue
-            results.append(obj)
-        return results
 
     if hasattr(filename_or_fh, 'read'):
-        return _read_lines(filename_or_fh)
+        fh = filename_or_fh
+    else:
+        fh = open(filename_or_fh, encoding='utf-8', errors='ignore')
 
-    with open(filename_or_fh) as fh:
-        return _read_lines(fh)
+    if filter_kv is not None:
+        keys, value = filter_kv
+        if type(keys) != tuple:
+            keys = (keys,)
+        max_idx = len(keys) - 1
+
+    results = []
+    for line in fh:
+        if not (line := line.strip()):
+            continue
+        obj = json.loads(line)
+        if filter_kv is None:
+            results.append(obj)
+            continue
+        
+        for idx, key in enumerate(keys):
+            if not isinstance(obj, dict) or (val := obj.get(key)) is None:
+                break
+            if idx == max_idx:
+                if val == value:
+                    results.append(obj)
+            else:
+                obj = val
+
+    return results
+
