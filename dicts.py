@@ -4,6 +4,13 @@ from functools import reduce
 import operator
 from collections import defaultdict
 
+def gets(basedict, keys):
+    """
+    Given a list of keys, return corresponding list of values.
+    """
+    return [basedict.get(k) for k in keys]
+
+
 def get_nested(basedict, keys):
     """
     Given a list of nested keys, return basedict[keys[0]][keys[1]][...]
@@ -51,6 +58,23 @@ def diff(basedict, newdict, ignore_missing=False, convert_bool=False):
         if value != existing:
             diff[key] = (existing, value)
     return diff
+
+
+def nodiff(basedict, newdicts, fields=None):
+    """
+    Check if newdicts (list of dicts)  have same values of basedict for given fields.
+    If fields is None, all keys of basedict are checked.
+    """
+    if fields is None:
+        fields = basedict.keys()
+
+    for f in fields:
+        val = basedict.get(f)
+        for newdict in newdicts:
+            if newdict.get(f) != val:
+                return False
+
+    return True
 
 
 def csv_to_dict(filename, index_field):
