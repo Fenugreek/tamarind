@@ -12,7 +12,7 @@ the Free Software Foundation, either version 3 of the License, or
 import re
 import numpy, unidecode
 
-format_expression = re.compile('%([+-]*)(\d+)\.*\d*\w')
+format_expression = re.compile(r'%([+-]*)(\d+)\.*\d*\w')
 
 def slugify(input_str, lower=True):
     """Transform input string <text> to URL friendly name."""
@@ -239,7 +239,7 @@ def abbrev(string, length, pfx=None, sfx=None, spanner='...'):
         pfx = (length - len_span) // 3
         sfx = length - len_span - pfx
 
-    return string[:pfx] + spanner + string[-sfx:]
+    return string[:pfx] + spanner + (string[-sfx:] if sfx else '')
 
 
 def replace_ext(fname, new_ext):
