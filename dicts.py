@@ -18,26 +18,33 @@ def get_nested(basedict, keys):
     return reduce(operator.getitem, keys, basedict)
 
 
-def dict_list(records, key, field=None):
+def list_to_dict(records, key, field=None, index=None):
     """
-    Given a list of records and a key field, return a dict with values of key field
-    as keys and corresponding records as lists of values.
+    Given a list of records and a <key> field, return a dict with values of <key>
+    field as keys and corresponding records as lists of values, or dict indexed
+    by <index> if <index> is not None.
 
-    If field is not None, returned values are record[field]. If field is not found
-    in a record or the value is None, the record is skipped.
+    If <field> is not None, returned values are record[<field>]. If <field> is not
+    found in a record or the value is None, the record is skipped.
 
-    If key not found in a record or record[key] is None, that record is skipped.
+    If <key> not found in a record or record[<key>] is None, that record is skipped.
     """
 
-    output = defaultdict(list)
+    output = defaultdict(list if index is None else dict)
     for entry in records:
         if (identifier := entry.get(key)) is None:
             continue
-        if field is not None:
-            if field in entry:
-                output[identifier].append(entry[field])
+        if field is None:
+            row = entry
+        elif (row := entry.get(field)) is None:
+            continue
+
+        if index is None:
+            output[identifier].append(row)
+        elif (idx := entry.get(index)) is None:
+            continue
         else:
-            output[identifier].append(entry)
+            output[identifier][idx] = entry
 
     return dict(output) # Remove defaultdict
 
