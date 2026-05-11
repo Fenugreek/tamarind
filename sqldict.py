@@ -90,3 +90,27 @@ def append(sql_fname, add_sql_fname, tables=None, overwrite=False, **kwargs):
         sd.commit()
 
     return added, preexisting
+
+
+def write_dict(input_dict, sql_fname):
+    """
+    Write <input_dict> to sql_fname, with keys as tablenames.
+    Values of <input_dict> are assumed to be dicts too, and their keys are used
+    as keys into the table.
+    """
+    for table_name, entry in input_dict.items():
+        sql = SqliteDict(sql_fname, tablename=table_name, autocommit=False)
+        for key, value in entry.items():
+            sql[key] = value
+        sql.commit()
+
+
+def read_dict(sql_fname):
+    """
+    Return a dict with tablenames as keys and contents of each table as values
+    (dicts themselves).
+    """
+    result = {}
+    for table_name in SqliteDict.get_tablenames(sql_fname):
+        result[table_name] = dict(SqliteDict(sql_fname, tablename=table_name))
+    return result
