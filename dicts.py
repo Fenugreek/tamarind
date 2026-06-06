@@ -3,6 +3,7 @@ import csv
 from functools import reduce
 import operator
 from collections import defaultdict
+from typing import List, Dict, Any
 
 def gets(basedict, keys):
     """
@@ -123,3 +124,31 @@ def csv_to_dict(filename, index_field):
         raise FileNotFoundError(f"CSV file '{filename}' not found")
     
     return result_dict
+
+
+def dicts_to_csv(
+    data: List[Dict[str, Any]], 
+    output_filename: str, 
+    fieldnames: List[str], 
+    missing_value: str = ''
+) -> None:
+    """
+    Writes a list of dictionaries to a CSV file with a specified column order.
+    
+    :param data: List of dictionaries containing the row data.
+    :param fieldnames: List of strings defining the columns and their exact order.
+    :param output_filename: The path/name of the CSV file to create.
+    :param missing_value: Default string to use if a field is missing in a dict.
+    """
+    # 'newline=""' is recommended by the csv module documentation to prevent 
+    # double newline issues across different platforms (like Windows).
+    with open(output_filename, mode='w', newline='', encoding='utf-8') as csv_file:
+        
+        # restval specifies what to write if a key in the dict is missing
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames, restval=missing_value)
+        
+        # Write the header row (column names)
+        writer.writeheader()
+        
+        # Write all the data rows
+        writer.writerows(data)
