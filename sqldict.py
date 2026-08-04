@@ -64,6 +64,9 @@ def append(sql_fname, add_sql_fname, tables=None, overwrite=False, **kwargs):
 
     overwrite:
     If true, overwrite existing entries.
+
+    kwargs:
+    kwargs to pass to SqliteDict constructor. Useful if encoded.
     """
 
     if tables is None:
@@ -90,6 +93,73 @@ def append(sql_fname, add_sql_fname, tables=None, overwrite=False, **kwargs):
         sd.commit()
 
     return added, preexisting
+
+
+def add_columns(sql_fname, add_sql_fname, columns, tables=None, overwrite=False, **kwargs):
+    """
+    Add columnar values in <add_sql_fname> to <sql_fname> where same keys exist.
+    Returns number of entries added, and dict of (table, keys) which had pre-existing values
+    (that were skipped or overwritten, as per overwite flag), and
+    dict of (table, keys) of entries in source that did not exist in target.
+
+    tables:
+    For only this table / list of tables.
+
+    overwrite:
+    If true, overwrite existing entries.
+    """
+
+    if type(columns) == str:
+        columns = [columns]
+
+    if tables is None:
+        tables = SqliteDict.get_tablenames(add_sql_fname)
+        tables.sort()
+    elif type(tables) == str:
+        tables = [tables]
+    existing_tables = [t.lower() for t in SqliteDict.get_tablenames(sql_fname)]
+    add_tables = [t.lower() for t in SqliteDict.get_tablenames(add_sql_fname)]
+
+    added, missing = defaultdict(int), defaultdict(list)
+    preexisting = dict((c, defaultdict(list)) for c in columns)
+    for table in tables:
+        table = table.lower()
+        if table not in add_tables:
+            continue
+        add_sd = SqliteDict(add_sql_fname, tablename=table, **kwargs)
+        if table not in existing_tables:
+            missing[table] = list(add_sd.keys())
+            continue
+
+        sd = SqliteDict(sql_fname, tablename=table, **kwargs)
+        table_entry_added = added[table]
+        for key, entry in add_sd.items():
+            column_vals = {}
+            for col in columns:
+                if val := entry.get(col):
+                    column_vals[col] = val
+            if not column_vals:
+                continue
+
+            if (row := sd.get(key)) is None:
+                missing[table].append(key)
+                continue
+
+            row_entry_added = added[table]
+            for col, val in column_vals.items():
+                if row.get(col):
+                    preexisting[col][table].append(key)
+                    if not overwrite:
+                        continue
+                row[col] = val
+                added[table] += 1
+            if row_entry_added != added[table]: # updated
+                sd[key] = row
+
+        if table_entry_added != added[table]: # updated
+            sd.commit()
+
+    return added, preexisting, missing
 
 
 def write_dict(input_dict, sql_fname):
